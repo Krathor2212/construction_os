@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 
+import 'package:go_router/go_router.dart';
+
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
@@ -209,9 +211,11 @@ class _EmptyProjectsCard extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () {
+                  context.push('/projects');
+                },
                 icon: const Icon(Icons.add),
-                label: const Text('Create Project'),
+                label: const Text('View Projects'),
               ),
             ],
           ),

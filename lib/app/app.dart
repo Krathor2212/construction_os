@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'theme/app_theme.dart';
 import 'router.dart';
 
 class SuGoRaApp extends ConsumerWidget {
@@ -11,6 +12,7 @@ class SuGoRaApp extends ConsumerWidget {
     return MaterialApp.router(
       title: 'SuGoRa Construction OS',
       debugShowCheckedModeBanner: false,
+      theme: AppTheme.light(),
       routerConfig: appRouter,
     );
   }

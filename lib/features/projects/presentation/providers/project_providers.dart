@@ -8,6 +8,10 @@ import '../../data/repositories/mock_project_phase_repository.dart';
 import '../../domain/entities/project_phase.dart';
 import '../../domain/repositories/project_phase_repository.dart';
 
+import '../../data/repositories/mock_project_contact_repository.dart';
+import '../../domain/entities/project_contact.dart';
+import '../../domain/repositories/project_contact_repository.dart';
+
 final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
   return MockProjectRepository();
 });
@@ -37,5 +41,21 @@ final projectPhasesProvider =
     final repository = ref.watch(projectPhaseRepositoryProvider);
 
     return repository.getPhases(projectId);
+  },
+);
+
+final projectContactRepositoryProvider =
+    Provider<ProjectContactRepository>((ref) {
+  return MockProjectContactRepository();
+});
+
+final projectContactsProvider =
+    FutureProvider.family<List<ProjectContact>, String>(
+  (ref, projectId) async {
+    final repository = ref.watch(
+      projectContactRepositoryProvider,
+    );
+
+    return repository.getContacts(projectId);
   },
 );

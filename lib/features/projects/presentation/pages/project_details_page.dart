@@ -98,7 +98,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             icon: Icons.contacts_outlined,
             title: 'Contacts',
             subtitle: 'Client, engineers, architects and others',
-            onTap: () {},
+            onTap: () {
+              context.push('/projects/${project.id}/contacts');
+            },
           ),
           _ManagementOption(
             icon: Icons.request_quote_outlined,

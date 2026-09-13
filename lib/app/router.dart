@@ -4,6 +4,7 @@ import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/projects/presentation/pages/project_details_page.dart';
 import '../features/projects/presentation/pages/projects_page.dart';
 import '../features/projects/presentation/pages/project_timeline_page.dart';
+import '../features/projects/presentation/pages/project_contacts_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -32,6 +33,16 @@ final GoRouter appRouter = GoRouter(
       final projectId = state.pathParameters['projectId']!;
 
       return ProjectTimelinePage(
+        projectId: projectId,
+      );
+    },
+    ),
+    GoRoute(
+    path: '/projects/:projectId/contacts',
+    builder: (context, state) {
+      final projectId = state.pathParameters['projectId']!;
+
+      return ProjectContactsPage(
         projectId: projectId,
       );
     },

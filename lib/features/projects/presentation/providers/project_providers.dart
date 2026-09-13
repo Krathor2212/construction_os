@@ -13,3 +13,11 @@ final projectsProvider = FutureProvider<List<Project>>((ref) async {
 
   return repository.getProjects();
 });
+
+final projectProvider = FutureProvider.family<Project, String>(
+  (ref, projectId) async {
+    final repository = ref.watch(projectRepositoryProvider);
+
+    return repository.getProject(projectId);
+  },
+);

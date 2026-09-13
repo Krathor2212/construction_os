@@ -1,6 +1,7 @@
 import 'package:go_router/go_router.dart';
 
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
+import '../features/projects/presentation/pages/project_details_page.dart';
 import '../features/projects/presentation/pages/projects_page.dart';
 
 final GoRouter appRouter = GoRouter(
@@ -13,6 +14,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/projects',
       builder: (context, state) => const ProjectsPage(),
+    ),
+    GoRoute(
+      path: '/projects/:projectId',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+
+        return ProjectDetailsPage(
+          projectId: projectId,
+        );
+      },
     ),
   ],
 );

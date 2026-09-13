@@ -122,7 +122,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             icon: Icons.inventory_2_outlined,
             title: 'Materials',
             subtitle: 'Track material requirements and quantities',
-            onTap: () {},
+            onTap: () {
+            context.push('/materials');
+          },
           ),
         ],
       ),

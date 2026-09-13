@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_spacing.dart';
-import '../../../materials/presentation/providers/material_providers.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../projects/presentation/providers/project_providers.dart';
 import '../../../workforce/presentation/providers/worker_providers.dart';
@@ -187,13 +186,11 @@ class _SummaryCard extends StatelessWidget {
     required this.title,
     required this.value,
     required this.icon,
-    this.subtitle,
   });
 
   final String title;
   final String value;
   final IconData icon;
-  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -221,13 +218,6 @@ class _SummaryCard extends StatelessWidget {
                   title,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ],
               ],
             ),
           ],

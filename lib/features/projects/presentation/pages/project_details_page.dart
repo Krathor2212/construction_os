@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/project.dart';
 import '../providers/project_providers.dart';
@@ -88,7 +90,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             icon: Icons.timeline_outlined,
             title: 'Timeline',
             subtitle: 'Manage project phases and progress',
-            onTap: () {},
+            onTap: () {
+            context.push('/projects/${project.id}/timeline');
+          },
           ),
           _ManagementOption(
             icon: Icons.contacts_outlined,

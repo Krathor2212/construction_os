@@ -5,6 +5,7 @@ import '../features/projects/presentation/pages/project_details_page.dart';
 import '../features/projects/presentation/pages/projects_page.dart';
 import '../features/projects/presentation/pages/project_timeline_page.dart';
 import '../features/projects/presentation/pages/project_contacts_page.dart';
+import '../features/projects/presentation/pages/project_quotations_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -47,5 +48,15 @@ final GoRouter appRouter = GoRouter(
       );
     },
   ),
+    GoRoute(
+      path: '/projects/:projectId/quotations',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+
+        return ProjectQuotationsPage(
+          projectId: projectId,
+        );
+      },
+    ),
   ],
 );

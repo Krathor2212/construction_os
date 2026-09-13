@@ -12,6 +12,10 @@ import '../../data/repositories/mock_project_contact_repository.dart';
 import '../../domain/entities/project_contact.dart';
 import '../../domain/repositories/project_contact_repository.dart';
 
+import '../../data/repositories/mock_project_quotation_repository.dart';
+import '../../domain/entities/project_quotation.dart';
+import '../../domain/repositories/project_quotation_repository.dart';
+
 final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
   return MockProjectRepository();
 });
@@ -57,5 +61,21 @@ final projectContactsProvider =
     );
 
     return repository.getContacts(projectId);
+  },
+);
+
+final projectQuotationRepositoryProvider =
+    Provider<ProjectQuotationRepository>((ref) {
+  return MockProjectQuotationRepository();
+});
+
+final projectQuotationsProvider =
+    FutureProvider.family<List<ProjectQuotation>, String>(
+  (ref, projectId) async {
+    final repository = ref.watch(
+      projectQuotationRepositoryProvider,
+    );
+
+    return repository.getQuotations(projectId);
   },
 );

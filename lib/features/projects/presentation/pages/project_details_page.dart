@@ -106,7 +106,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             icon: Icons.request_quote_outlined,
             title: 'Quotation',
             subtitle: 'Manage quotation and commercial details',
-            onTap: () {},
+            onTap: () {
+              context.push('/projects/${project.id}/quotations');
+            },
           ),
           _ManagementOption(
             icon: Icons.groups_outlined,

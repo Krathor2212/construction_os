@@ -6,6 +6,7 @@ import '../features/projects/presentation/pages/projects_page.dart';
 import '../features/projects/presentation/pages/project_timeline_page.dart';
 import '../features/projects/presentation/pages/project_contacts_page.dart';
 import '../features/projects/presentation/pages/project_quotations_page.dart';
+import '../features/workforce/presentation/pages/workers_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -57,6 +58,10 @@ final GoRouter appRouter = GoRouter(
           projectId: projectId,
         );
       },
+    ),
+    GoRoute(
+      path: '/workers',
+      builder: (context, state) => const WorkersPage(),
     ),
   ],
 );

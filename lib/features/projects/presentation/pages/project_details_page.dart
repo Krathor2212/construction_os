@@ -114,7 +114,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             icon: Icons.groups_outlined,
             title: 'Labour',
             subtitle: 'Manage workers and labour assignments',
-            onTap: () {},
+            onTap: () {
+            context.push('/workers');
+          },
           ),
           _ManagementOption(
             icon: Icons.inventory_2_outlined,

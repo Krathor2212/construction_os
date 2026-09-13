@@ -126,6 +126,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             context.push('/materials');
           },
           ),
+          _ProjectManagementTile(
+          icon: Icons.local_shipping_outlined,
+          title: 'Suppliers',
+          subtitle: 'Manage suppliers and procurement',
+          onTap: () {
+            context.push('/suppliers');
+          },
+        ),
         ],
       ),
     );

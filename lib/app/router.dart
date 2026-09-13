@@ -8,6 +8,7 @@ import '../features/projects/presentation/pages/project_contacts_page.dart';
 import '../features/projects/presentation/pages/project_quotations_page.dart';
 import '../features/workforce/presentation/pages/workers_page.dart';
 import '../features/materials/presentation/pages/materials_page.dart';
+import '../features/procurement/presentation/pages/suppliers_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -67,6 +68,10 @@ final GoRouter appRouter = GoRouter(
       GoRoute(
       path: '/materials',
       builder: (context, state) => const MaterialsPage(),
+    ),
+    GoRoute(
+      path: '/suppliers',
+      builder: (context, state) => const SuppliersPage(),
     ),
   ],
 );

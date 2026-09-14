@@ -9,6 +9,7 @@ import '../features/projects/presentation/pages/project_quotations_page.dart';
 import '../features/workforce/presentation/pages/workers_page.dart';
 import '../features/materials/presentation/pages/materials_page.dart';
 import '../features/procurement/presentation/pages/suppliers_page.dart';
+import '../features/procurement/presentation/pages/purchase_quotations_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -72,6 +73,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/suppliers',
       builder: (context, state) => const SuppliersPage(),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/purchase-quotations',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+
+        return PurchaseQuotationsPage(
+          projectId: projectId,
+        );
+      },
     ),
   ],
 );

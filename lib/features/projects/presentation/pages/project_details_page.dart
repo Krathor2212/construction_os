@@ -131,6 +131,16 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.request_quote_outlined,
+            title: 'Purchase Quotations',
+            subtitle: 'Supplier quotations and material pricing',
+            onTap: () {
+              context.push(
+                '/projects/${project.id}/purchase-quotations',
+              );
+            },
+          ),
+          _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
             subtitle: 'Manage workers and labour assignments',

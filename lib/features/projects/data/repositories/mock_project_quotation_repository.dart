@@ -50,7 +50,9 @@ class MockProjectQuotationRepository
   ) async {
     return List.unmodifiable(
       _quotations.where(
-        (quotation) => quotation.projectId == projectId,
+        (quotation) =>
+            quotation.projectId == projectId &&
+            !quotation.isArchived,
       ),
     );
   }
@@ -89,9 +91,30 @@ class MockProjectQuotationRepository
   }
 
   @override
-  Future<void> deleteQuotation(String id) async {
-    _quotations.removeWhere(
+  Future<void> archiveQuotation(String id) async {
+    final index = _quotations.indexWhere(
       (quotation) => quotation.id == id,
+    );
+
+    if (index == -1) {
+      throw StateError('Quotation not found: $id');
+    }
+
+    final quotation = _quotations[index];
+
+    _quotations[index] = ProjectQuotation(
+      id: quotation.id,
+      projectId: quotation.projectId,
+      quotationNumber: quotation.quotationNumber,
+      supplierName: quotation.supplierName,
+      quotationDate: quotation.quotationDate,
+      validUntil: quotation.validUntil,
+      subtotal: quotation.subtotal,
+      tax: quotation.tax,
+      discount: quotation.discount,
+      notes: quotation.notes,
+      status: quotation.status,
+      isArchived: true,
     );
   }
 }

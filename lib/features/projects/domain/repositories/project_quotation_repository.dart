@@ -1,9 +1,13 @@
 import '../entities/project_quotation.dart';
 
 abstract interface class ProjectQuotationRepository {
-  Future<List<ProjectQuotation>> getQuotations(String projectId);
+  Future<List<ProjectQuotation>> getQuotations(
+    String projectId,
+  );
 
-  Future<ProjectQuotation> getQuotation(String id);
+  Future<ProjectQuotation> getQuotation(
+    String id,
+  );
 
   Future<ProjectQuotation> createQuotation(
     ProjectQuotation quotation,
@@ -13,5 +17,7 @@ abstract interface class ProjectQuotationRepository {
     ProjectQuotation quotation,
   );
 
-  Future<void> deleteQuotation(String id);
+  Future<void> archiveQuotation(
+    String id,
+  );
 }

@@ -71,6 +71,10 @@ class _QuotationDetails extends ConsumerWidget {
       data: (supplier) => supplier.name,
     );
 
+    final itemsAsync = ref.watch(
+      purchaseQuotationItemsProvider(quotation.id),
+    );
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(
@@ -108,8 +112,22 @@ class _QuotationDetails extends ConsumerWidget {
           const SizedBox(
             height: AppSpacing.md,
           ),
-          _FinancialSummaryCard(
-            quotation: quotation,
+          itemsAsync.when(
+            loading: () => const _FinancialLoadingCard(),
+            error: (_, _) => _FinancialSummaryCard(
+              subtotal: 0,
+              tax: 0,
+              discount: quotation.discount,
+              deliveryCharges: quotation.deliveryCharges,
+            ),
+            data: (items) {
+              return _FinancialSummaryCard(
+                subtotal: _calculateSubtotal(items),
+                tax: _calculateTax(items),
+                discount: quotation.discount,
+                deliveryCharges: quotation.deliveryCharges,
+              );
+            },
           ),
         ],
       ),
@@ -306,7 +324,7 @@ class _LineItemsSection extends ConsumerWidget {
                     ),
                     FilledButton.icon(
                       onPressed: () {
-                        _showAddItemDialog(
+                        _showItemDialog(
                           context,
                           ref,
                         );
@@ -348,7 +366,7 @@ class _LineItemsSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _showAddItemDialog(
+  Future<void> _showItemDialog(
     BuildContext context,
     WidgetRef ref,
   ) async {
@@ -600,10 +618,22 @@ class _LineItemTile extends ConsumerWidget {
 
 class _FinancialSummaryCard extends StatelessWidget {
   const _FinancialSummaryCard({
-    required this.quotation,
+    required this.subtotal,
+    required this.tax,
+    required this.discount,
+    required this.deliveryCharges,
   });
 
-  final PurchaseQuotation quotation;
+  final double subtotal;
+  final double tax;
+  final double discount;
+  final double deliveryCharges;
+
+  double get total =>
+      subtotal +
+      tax +
+      deliveryCharges -
+      discount;
 
   @override
   Widget build(BuildContext context) {
@@ -626,21 +656,21 @@ class _FinancialSummaryCard extends StatelessWidget {
             ),
             _AmountRow(
               label: 'Subtotal',
-              amount: quotation.subtotal,
+              amount: subtotal,
             ),
             const SizedBox(
               height: AppSpacing.sm,
             ),
             _AmountRow(
               label: 'Tax',
-              amount: quotation.tax,
+              amount: tax,
             ),
             const SizedBox(
               height: AppSpacing.sm,
             ),
             _AmountRow(
               label: 'Discount',
-              amount: quotation.discount,
+              amount: discount,
               isNegative: true,
             ),
             const SizedBox(
@@ -648,7 +678,7 @@ class _FinancialSummaryCard extends StatelessWidget {
             ),
             _AmountRow(
               label: 'Delivery Charges',
-              amount: quotation.deliveryCharges,
+              amount: deliveryCharges,
             ),
             const SizedBox(
               height: AppSpacing.md,
@@ -667,9 +697,7 @@ class _FinancialSummaryCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  _formatCurrency(
-                    quotation.total,
-                  ),
+                  _formatCurrency(total),
                   style: Theme.of(context)
                       .textTheme
                       .titleMedium,
@@ -677,6 +705,24 @@ class _FinancialSummaryCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FinancialLoadingCard extends StatelessWidget {
+  const _FinancialLoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(
+          AppSpacing.lg,
+        ),
+        child: Center(
+          child: CircularProgressIndicator(),
         ),
       ),
     );
@@ -921,6 +967,24 @@ class _ErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+double _calculateSubtotal(
+  List<PurchaseQuotationItem> items,
+) {
+  return items.fold(
+    0,
+    (sum, item) => sum + item.subtotal,
+  );
+}
+
+double _calculateTax(
+  List<PurchaseQuotationItem> items,
+) {
+  return items.fold(
+    0,
+    (sum, item) => sum + item.tax,
+  );
 }
 
 String _formatDate(DateTime date) {

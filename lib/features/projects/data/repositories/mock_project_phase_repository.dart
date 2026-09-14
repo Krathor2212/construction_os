@@ -76,7 +76,9 @@ class MockProjectPhaseRepository implements ProjectPhaseRepository {
   Future<List<ProjectPhase>> getPhases(String projectId) async {
     return List.unmodifiable(
       _phases.where(
-        (phase) => phase.projectId == projectId,
+        (phase) =>
+            phase.projectId == projectId &&
+            !phase.isArchived,
       ),
     );
   }
@@ -109,9 +111,29 @@ class MockProjectPhaseRepository implements ProjectPhaseRepository {
   }
 
   @override
-  Future<void> deletePhase(String id) async {
-    _phases.removeWhere(
-      (phase) => phase.id == id,
-    );
+Future<void> archivePhase(String id) async {
+  final index = _phases.indexWhere(
+    (phase) => phase.id == id,
+  );
+
+  if (index == -1) {
+    throw StateError('Phase not found: $id');
   }
+
+  final phase = _phases[index];
+
+  _phases[index] = ProjectPhase(
+    id: phase.id,
+    projectId: phase.projectId,
+    name: phase.name,
+    plannedStartDate: phase.plannedStartDate,
+    plannedEndDate: phase.plannedEndDate,
+    actualStartDate: phase.actualStartDate,
+    actualEndDate: phase.actualEndDate,
+    status: phase.status,
+    progress: phase.progress,
+    notes: phase.notes,
+    isArchived: true,
+  );
+}
 }

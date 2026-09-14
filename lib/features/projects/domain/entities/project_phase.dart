@@ -10,6 +10,7 @@ class ProjectPhase {
     this.actualEndDate,
     this.progress = 0,
     this.notes,
+    this.isArchived = false,
   });
 
   final String id;
@@ -28,6 +29,10 @@ class ProjectPhase {
   final double progress;
 
   final String? notes;
+
+  /// Archived phases are retained for project history
+  /// but excluded from the active timeline.
+  final bool isArchived;
 }
 
 enum ProjectPhaseStatus {

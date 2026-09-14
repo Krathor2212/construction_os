@@ -9,5 +9,5 @@ abstract interface class ProjectPhaseRepository {
 
   Future<ProjectPhase> updatePhase(ProjectPhase phase);
 
-  Future<void> deletePhase(String id);
+  Future<void> archivePhase(String id);
 }

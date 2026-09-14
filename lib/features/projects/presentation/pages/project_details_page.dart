@@ -141,6 +141,16 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.request_quote_outlined,
+            title: 'Purchase Orders',
+            subtitle: 'Manage purchase orders and supplier deliveries',
+            onTap: () {
+              context.push(
+                '/projects/${project.id}/purchase-orders',
+              );
+            },
+          ),
+          _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
             subtitle: 'Manage workers and labour assignments',

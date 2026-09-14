@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/app_spacing.dart';
+import '../../../materials/presentation/providers/material_providers.dart';
 import '../../domain/entities/purchase_order.dart';
 import '../../domain/entities/purchase_order_item.dart';
 import '../providers/purchase_order_item_providers.dart';
 import '../providers/purchase_order_providers.dart';
 import '../providers/supplier_providers.dart';
-import '../../../materials/presentation/providers/material_providers.dart';
+import '../widgets/purchase_order_item_form_dialog.dart';
 
 class PurchaseOrderDetailsPage extends ConsumerWidget {
   const PurchaseOrderDetailsPage({
@@ -21,7 +22,10 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
   final String orderId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final orderAsync = ref.watch(
       purchaseOrderProvider(orderId),
     );
@@ -47,6 +51,7 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
             ref.invalidate(
               purchaseOrderProvider(orderId),
             );
+
             ref.invalidate(
               purchaseOrderItemsProvider(orderId),
             );
@@ -57,7 +62,9 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
           },
           child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(
+              AppSpacing.md,
+            ),
             children: [
               _OrderHeaderCard(
                 order: order,
@@ -73,9 +80,59 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
               ),
               _LineItemsSection(
                 order: order,
+                onAddItem: () => _showAddItemDialog(
+                  context,
+                  ref,
+                  order.id,
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAddItemDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String purchaseOrderId,
+  ) async {
+    final result = await showDialog<PurchaseOrderItem>(
+      context: context,
+      builder: (context) {
+        return PurchaseOrderItemFormDialog(
+          purchaseOrderId: purchaseOrderId,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderItemRepositoryProvider,
+    );
+
+    await repository.createItem(
+      result,
+    );
+
+    ref.invalidate(
+      purchaseOrderItemsProvider(
+        purchaseOrderId,
+      ),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Purchase order item added',
         ),
       ),
     );
@@ -90,7 +147,10 @@ class _OrderHeaderCard extends ConsumerWidget {
   final PurchaseOrder order;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final supplierAsync = ref.watch(
       supplierProvider(order.supplierId),
     );
@@ -107,8 +167,7 @@ class _OrderHeaderCard extends ConsumerWidget {
           AppSpacing.md,
         ),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               crossAxisAlignment:
@@ -121,8 +180,7 @@ class _OrderHeaderCard extends ConsumerWidget {
                         .textTheme
                         .headlineSmall
                         ?.copyWith(
-                          fontWeight:
-                              FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                         ),
                   ),
                 ),
@@ -139,8 +197,7 @@ class _OrderHeaderCard extends ConsumerWidget {
                 const Icon(
                   Icons.business_outlined,
                   size: 18,
-                  color:
-                      AppColors.textSecondary,
+                  color: AppColors.textSecondary,
                 ),
                 const SizedBox(
                   width: AppSpacing.xs,
@@ -152,8 +209,7 @@ class _OrderHeaderCard extends ConsumerWidget {
                         .textTheme
                         .bodyLarge
                         ?.copyWith(
-                          fontWeight:
-                              FontWeight.w600,
+                          fontWeight: FontWeight.w600,
                         ),
                   ),
                 ),
@@ -166,8 +222,7 @@ class _OrderHeaderCard extends ConsumerWidget {
   }
 }
 
-class _OrderInformationCard
-    extends StatelessWidget {
+class _OrderInformationCard extends StatelessWidget {
   const _OrderInformationCard({
     required this.order,
   });
@@ -175,7 +230,9 @@ class _OrderInformationCard
   final PurchaseOrder order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(
@@ -191,8 +248,7 @@ class _OrderInformationCard
                   .textTheme
                   .titleMedium
                   ?.copyWith(
-                    fontWeight:
-                        FontWeight.w700,
+                    fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(
@@ -207,8 +263,7 @@ class _OrderInformationCard
             _InfoRow(
               label: 'Expected Delivery',
               value:
-                  order.expectedDeliveryDate ==
-                          null
+                  order.expectedDeliveryDate == null
                       ? 'Not specified'
                       : _formatDate(
                           order.expectedDeliveryDate!,
@@ -237,8 +292,7 @@ class _OrderInformationCard
                     .textTheme
                     .bodyMedium
                     ?.copyWith(
-                      fontWeight:
-                          FontWeight.w600,
+                      fontWeight: FontWeight.w600,
                     ),
               ),
               const SizedBox(
@@ -250,8 +304,7 @@ class _OrderInformationCard
                     .textTheme
                     .bodyMedium
                     ?.copyWith(
-                      color:
-                          AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                     ),
               ),
             ],
@@ -262,13 +315,14 @@ class _OrderInformationCard
   }
 }
 
-class _LineItemsSection
-    extends ConsumerWidget {
+class _LineItemsSection extends ConsumerWidget {
   const _LineItemsSection({
     required this.order,
+    required this.onAddItem,
   });
 
   final PurchaseOrder order;
+  final VoidCallback onAddItem;
 
   @override
   Widget build(
@@ -297,31 +351,59 @@ class _LineItemsSection
           padding: const EdgeInsets.all(
             AppSpacing.md,
           ),
-          child: Text(
-            'Unable to load line items.\n$error',
+          child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Unable to load line items.',
+              ),
+              const SizedBox(
+                height: AppSpacing.xs,
+              ),
+              Text(
+                error.toString(),
+              ),
+            ],
           ),
         ),
       ),
       data: (items) {
-        final subtotal =
-            _calculateSubtotal(items);
+        final subtotal = _calculateSubtotal(
+          items,
+        );
 
-        final tax =
-            _calculateTax(items);
+        final tax = _calculateTax(
+          items,
+        );
 
         return Column(
           crossAxisAlignment:
               CrossAxisAlignment.start,
           children: [
-            Text(
-              'Line Items',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge
-                  ?.copyWith(
-                    fontWeight:
-                        FontWeight.w700,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Line Items',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
+                ),
+                FilledButton.icon(
+                  onPressed: onAddItem,
+                  icon: const Icon(
+                    Icons.add,
+                  ),
+                  label: const Text(
+                    'Add Item',
+                  ),
+                ),
+              ],
             ),
             const SizedBox(
               height: AppSpacing.sm,
@@ -368,8 +450,7 @@ class _LineItemsSection
   }
 }
 
-class _LineItemCard
-    extends ConsumerWidget {
+class _LineItemCard extends ConsumerWidget {
   const _LineItemCard({
     required this.item,
   });
@@ -382,11 +463,12 @@ class _LineItemCard
     WidgetRef ref,
   ) {
     final materialAsync = ref.watch(
-      materialProvider(item.materialId),
+      materialProvider(
+        item.materialId,
+      ),
     );
 
-    final materialName =
-        materialAsync.when(
+    final materialName = materialAsync.when(
       data: (material) => material.name,
       loading: () => item.description,
       error: (_, _) => item.description,
@@ -412,8 +494,7 @@ class _LineItemCard
                         .textTheme
                         .titleMedium
                         ?.copyWith(
-                          fontWeight:
-                              FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                         ),
                   ),
                 ),
@@ -425,8 +506,7 @@ class _LineItemCard
                       .textTheme
                       .titleMedium
                       ?.copyWith(
-                        fontWeight:
-                            FontWeight.w700,
+                        fontWeight: FontWeight.w700,
                       ),
                 ),
               ],
@@ -440,8 +520,7 @@ class _LineItemCard
                   .textTheme
                   .bodySmall
                   ?.copyWith(
-                    color:
-                        AppColors.textSecondary,
+                    color: AppColors.textSecondary,
                   ),
             ),
             const SizedBox(
@@ -454,7 +533,8 @@ class _LineItemCard
                 _DetailLabel(
                   label: 'Quantity',
                   value:
-                      '${_formatNumber(item.quantity)} ${item.unit}',
+                      '${_formatNumber(item.quantity)} '
+                      '${item.unit}',
                 ),
                 _DetailLabel(
                   label: 'Unit Rate',
@@ -486,8 +566,7 @@ class _LineItemCard
                     .textTheme
                     .bodySmall
                     ?.copyWith(
-                      color:
-                          AppColors.textSecondary,
+                      color: AppColors.textSecondary,
                     ),
               ),
             ],
@@ -513,7 +592,9 @@ class _FinancialSummaryCard
   final double deliveryCharges;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     final grandTotal =
         subtotal +
         tax +
@@ -535,8 +616,7 @@ class _FinancialSummaryCard
                   .textTheme
                   .titleMedium
                   ?.copyWith(
-                    fontWeight:
-                        FontWeight.w700,
+                    fontWeight: FontWeight.w700,
                   ),
             ),
             const SizedBox(
@@ -573,8 +653,7 @@ class _FinancialSummaryCard
   }
 }
 
-class _AmountRow
-    extends StatelessWidget {
+class _AmountRow extends StatelessWidget {
   const _AmountRow({
     required this.label,
     required this.amount,
@@ -586,7 +665,9 @@ class _AmountRow
   final bool isTotal;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     final textStyle = Theme.of(context)
         .textTheme
         .bodyMedium
@@ -618,8 +699,7 @@ class _AmountRow
   }
 }
 
-class _DetailLabel
-    extends StatelessWidget {
+class _DetailLabel extends StatelessWidget {
   const _DetailLabel({
     required this.label,
     required this.value,
@@ -629,7 +709,9 @@ class _DetailLabel
   final String value;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Column(
       crossAxisAlignment:
           CrossAxisAlignment.start,
@@ -640,19 +722,19 @@ class _DetailLabel
               .textTheme
               .labelSmall
               ?.copyWith(
-                color:
-                    AppColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(
+          height: 2,
+        ),
         Text(
           value,
           style: Theme.of(context)
               .textTheme
               .bodySmall
               ?.copyWith(
-                fontWeight:
-                    FontWeight.w600,
+                fontWeight: FontWeight.w600,
               ),
         ),
       ],
@@ -660,8 +742,7 @@ class _DetailLabel
   }
 }
 
-class _InfoRow
-    extends StatelessWidget {
+class _InfoRow extends StatelessWidget {
   const _InfoRow({
     required this.label,
     required this.value,
@@ -671,7 +752,9 @@ class _InfoRow
   final String value;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(
         bottom: AppSpacing.sm,
@@ -688,8 +771,7 @@ class _InfoRow
                   .textTheme
                   .bodyMedium
                   ?.copyWith(
-                    color:
-                        AppColors.textSecondary,
+                    color: AppColors.textSecondary,
                   ),
             ),
           ),
@@ -700,8 +782,7 @@ class _InfoRow
                   .textTheme
                   .bodyMedium
                   ?.copyWith(
-                    fontWeight:
-                        FontWeight.w600,
+                    fontWeight: FontWeight.w600,
                   ),
             ),
           ),
@@ -711,8 +792,7 @@ class _InfoRow
   }
 }
 
-class _StatusChip
-    extends StatelessWidget {
+class _StatusChip extends StatelessWidget {
   const _StatusChip({
     required this.status,
   });
@@ -720,7 +800,9 @@ class _StatusChip
   final PurchaseOrderStatus status;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Chip(
       label: Text(
         _statusLabel(status),
@@ -731,8 +813,7 @@ class _StatusChip
   }
 }
 
-class _ErrorView
-    extends StatelessWidget {
+class _ErrorView extends StatelessWidget {
   const _ErrorView({
     required this.message,
     required this.onRetry,
@@ -742,15 +823,16 @@ class _ErrorView
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(
           AppSpacing.lg,
         ),
         child: Column(
-          mainAxisSize:
-              MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(
               Icons.error_outline,
@@ -762,8 +844,7 @@ class _ErrorView
             const Text(
               'Something went wrong',
               style: TextStyle(
-                fontWeight:
-                    FontWeight.w700,
+                fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(
@@ -771,8 +852,7 @@ class _ErrorView
             ),
             Text(
               message,
-              textAlign:
-                  TextAlign.center,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(
               height: AppSpacing.md,

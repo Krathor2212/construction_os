@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/project.dart';
 import '../providers/project_providers.dart';
+import '../widgets/project_form_dialog.dart';
 
 class ProjectDetailsPage extends ConsumerWidget {
   const ProjectDetailsPage({
@@ -23,8 +24,27 @@ class ProjectDetailsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Project Details'),
-      ),
+          title: const Text('Project Details'),
+          actions: [
+            IconButton(
+              onPressed: () async {
+                final updated = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => ProjectFormDialog(
+                    project: projectAsync.value!,
+                  ),
+                );
+
+                if (updated == true) {
+                  ref.invalidate(projectProvider(projectId));
+                  ref.invalidate(projectsProvider);
+                }
+              },
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: 'Edit project',
+            ),
+          ],
+        ),
       body: projectAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(),

@@ -5,6 +5,7 @@ class PurchaseOrder {
     required this.supplierId,
     required this.poNumber,
     required this.orderDate,
+    this.purchaseQuotationId,
     this.expectedDeliveryDate,
     this.subtotal = 0,
     this.tax = 0,
@@ -20,6 +21,9 @@ class PurchaseOrder {
   final String id;
   final String projectId;
   final String supplierId;
+
+  /// Optional quotation from which this purchase order originated.
+  final String? purchaseQuotationId;
 
   final String poNumber;
 

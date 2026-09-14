@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/purchase_order.dart';
+import '../../domain/entities/purchase_quotation.dart';
+import '../providers/purchase_quotation_providers.dart';
 
-class PurchaseOrderFormDialog extends StatefulWidget {
+class PurchaseOrderFormDialog extends ConsumerStatefulWidget {
   const PurchaseOrderFormDialog({
     super.key,
     required this.projectId,
@@ -16,12 +19,12 @@ class PurchaseOrderFormDialog extends StatefulWidget {
   bool get isEditing => order != null;
 
   @override
-  State<PurchaseOrderFormDialog> createState() =>
+  ConsumerState<PurchaseOrderFormDialog> createState() =>
       _PurchaseOrderFormDialogState();
 }
 
 class _PurchaseOrderFormDialogState
-    extends State<PurchaseOrderFormDialog> {
+    extends ConsumerState<PurchaseOrderFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _supplierIdController;
@@ -37,6 +40,8 @@ class _PurchaseOrderFormDialogState
   late DateTime _orderDate;
   DateTime? _expectedDeliveryDate;
   late PurchaseOrderStatus _status;
+
+  String? _purchaseQuotationId;
 
   @override
   void initState() {
@@ -85,6 +90,8 @@ class _PurchaseOrderFormDialogState
     _orderDate = order?.orderDate ?? DateTime.now();
     _expectedDeliveryDate = order?.expectedDeliveryDate;
     _status = order?.status ?? PurchaseOrderStatus.draft;
+
+    _purchaseQuotationId = order?.purchaseQuotationId;
   }
 
   @override
@@ -104,6 +111,10 @@ class _PurchaseOrderFormDialogState
 
   @override
   Widget build(BuildContext context) {
+    final quotationsAsync = ref.watch(
+      purchaseQuotationsProvider(widget.projectId),
+    );
+
     return AlertDialog(
       title: Text(
         widget.isEditing
@@ -127,6 +138,15 @@ class _PurchaseOrderFormDialogState
                 const SizedBox(
                   height: AppSpacing.sm,
                 ),
+
+                _buildQuotationDropdown(
+                  quotationsAsync,
+                ),
+
+                const SizedBox(
+                  height: AppSpacing.sm,
+                ),
+
                 _buildTextField(
                   controller: _poNumberController,
                   label: 'PO Number',
@@ -261,6 +281,106 @@ class _PurchaseOrderFormDialogState
     );
   }
 
+  Widget _buildQuotationDropdown(
+    AsyncValue<List<PurchaseQuotation>> quotationsAsync,
+  ) {
+    return quotationsAsync.when(
+      loading: () => const InputDecorator(
+        decoration: InputDecoration(
+          labelText: 'Purchase Quotation',
+          border: OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+            SizedBox(
+              width: AppSpacing.sm,
+            ),
+            Text('Loading quotations...'),
+          ],
+        ),
+      ),
+      error: (_, _) => InputDecorator(
+        decoration: const InputDecoration(
+          labelText: 'Purchase Quotation',
+          border: OutlineInputBorder(),
+        ),
+        child: Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Unable to load quotations',
+              ),
+            ),
+            IconButton(
+              tooltip: 'Retry',
+              onPressed: () {
+                ref.invalidate(
+                  purchaseQuotationsProvider(
+                    widget.projectId,
+                  ),
+                );
+              },
+              icon: const Icon(
+                Icons.refresh,
+              ),
+            ),
+          ],
+        ),
+      ),
+      data: (quotations) {
+        final activeQuotations = quotations
+            .where(
+              (quotation) => !quotation.isArchived,
+            )
+            .toList();
+
+        final selectedExists = activeQuotations.any(
+          (quotation) =>
+              quotation.id == _purchaseQuotationId,
+        );
+
+        final selectedValue =
+            selectedExists ? _purchaseQuotationId : null;
+
+        return DropdownButtonFormField<String?>(
+          initialValue: selectedValue,
+          decoration: const InputDecoration(
+            labelText: 'Purchase Quotation',
+            border: OutlineInputBorder(),
+          ),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text('No quotation'),
+            ),
+            ...activeQuotations.map(
+              (quotation) => DropdownMenuItem<String?>(
+                value: quotation.id,
+                child: Text(
+                  '${quotation.quotationNumber} — '
+                  '${_statusLabelForQuotation(quotation.status)}',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _purchaseQuotationId = value;
+            });
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -321,7 +441,9 @@ class _PurchaseOrderFormDialogState
                       _expectedDeliveryDate = null;
                     });
                   },
-                  icon: const Icon(Icons.clear),
+                  icon: const Icon(
+                    Icons.clear,
+                  ),
                 )
               : const Icon(
                   Icons.calendar_today_outlined,
@@ -378,11 +500,14 @@ class _PurchaseOrderFormDialogState
 
     final order = PurchaseOrder(
       id: widget.order?.id ??
-          'purchase-order-${DateTime.now().microsecondsSinceEpoch}',
+          'purchase-order-'
+              '${DateTime.now().microsecondsSinceEpoch}',
       projectId:
           widget.order?.projectId ?? widget.projectId,
       supplierId:
           _supplierIdController.text.trim(),
+      purchaseQuotationId:
+          _purchaseQuotationId,
       poNumber:
           _poNumberController.text.trim(),
       orderDate: _orderDate,
@@ -419,7 +544,8 @@ class _PurchaseOrderFormDialogState
   }
 
   String? _requiredValidator(String? value) {
-    if (value == null || value.trim().isEmpty) {
+    if (value == null ||
+        value.trim().isEmpty) {
       return 'This field is required';
     }
 
@@ -427,7 +553,8 @@ class _PurchaseOrderFormDialogState
   }
 
   String? _numberValidator(String? value) {
-    if (value == null || value.trim().isEmpty) {
+    if (value == null ||
+        value.trim().isEmpty) {
       return 'Enter an amount';
     }
 
@@ -458,27 +585,39 @@ class _PurchaseOrderFormDialogState
         '${date.year}';
   }
 
-  String _statusLabel(
-    PurchaseOrderStatus status,
-  ) {
+  String _statusLabel(PurchaseOrderStatus status) {
     switch (status) {
       case PurchaseOrderStatus.draft:
         return 'Draft';
-
       case PurchaseOrderStatus.issued:
         return 'Issued';
-
       case PurchaseOrderStatus.partiallyReceived:
         return 'Partially Received';
-
       case PurchaseOrderStatus.received:
         return 'Received';
-
       case PurchaseOrderStatus.cancelled:
         return 'Cancelled';
-
       case PurchaseOrderStatus.closed:
         return 'Closed';
+    }
+  }
+
+  String _statusLabelForQuotation(
+    PurchaseQuotationStatus status,
+  ) {
+    switch (status) {
+      case PurchaseQuotationStatus.draft:
+        return 'Draft';
+      case PurchaseQuotationStatus.received:
+        return 'Received';
+      case PurchaseQuotationStatus.underReview:
+        return 'Under Review';
+      case PurchaseQuotationStatus.accepted:
+        return 'Accepted';
+      case PurchaseQuotationStatus.rejected:
+        return 'Rejected';
+      case PurchaseQuotationStatus.expired:
+        return 'Expired';
     }
   }
 }

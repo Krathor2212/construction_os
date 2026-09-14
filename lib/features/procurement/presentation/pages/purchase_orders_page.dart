@@ -6,6 +6,7 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/purchase_order.dart';
 import '../providers/purchase_order_providers.dart';
 import '../providers/supplier_providers.dart';
+import '../widgets/purchase_order_form_dialog.dart';
 
 class PurchaseOrdersPage extends ConsumerWidget {
   const PurchaseOrdersPage({
@@ -53,12 +54,12 @@ class PurchaseOrdersPage extends ConsumerWidget {
               );
             },
             child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(
                 AppSpacing.md,
               ),
               itemCount: orders.length,
-              separatorBuilder: (_, _) =>
-                  const SizedBox(
+              separatorBuilder: (_, _) => const SizedBox(
                 height: AppSpacing.sm,
               ),
               itemBuilder: (context, index) {
@@ -73,6 +74,42 @@ class PurchaseOrdersPage extends ConsumerWidget {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAddOrderDialog(
+          context,
+          ref,
+        ),
+        icon: const Icon(Icons.add),
+        label: const Text('Add PO'),
+      ),
+    );
+  }
+
+  Future<void> _showAddOrderDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final result = await showDialog<PurchaseOrder>(
+      context: context,
+      builder: (context) {
+        return PurchaseOrderFormDialog(
+          projectId: projectId,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderRepositoryProvider,
+    );
+
+    await repository.createPurchaseOrder(result);
+
+    ref.invalidate(
+      purchaseOrdersProvider(projectId),
     );
   }
 }
@@ -87,7 +124,10 @@ class _PurchaseOrderCard extends ConsumerWidget {
   final PurchaseOrder order;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final supplierAsync = ref.watch(
       supplierProvider(order.supplierId),
     );
@@ -114,8 +154,7 @@ class _PurchaseOrderCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Text(
@@ -127,6 +166,67 @@ class _PurchaseOrderCard extends ConsumerWidget {
                   ),
                   _StatusChip(
                     status: order.status,
+                  ),
+                  const SizedBox(
+                    width: AppSpacing.xs,
+                  ),
+                  PopupMenuButton<String>(
+                    tooltip: 'More actions',
+                    padding: EdgeInsets.zero,
+                    onSelected: (value) async {
+                      switch (value) {
+                        case 'edit':
+                          await _showEditOrderDialog(
+                            context,
+                            ref,
+                          );
+                          break;
+
+                        case 'archive':
+                          await _archiveOrder(
+                            context,
+                            ref,
+                          );
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) {
+                      return const [
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 20,
+                              ),
+                              SizedBox(
+                                width: AppSpacing.sm,
+                              ),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'archive',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.archive_outlined,
+                                size: 20,
+                              ),
+                              SizedBox(
+                                width: AppSpacing.sm,
+                              ),
+                              Text('Archive'),
+                            ],
+                          ),
+                        ),
+                      ];
+                    },
+                    child: const Icon(
+                      Icons.more_vert,
+                    ),
                   ),
                 ],
               ),
@@ -156,8 +256,7 @@ class _PurchaseOrderCard extends ConsumerWidget {
                     child: _InfoItem(
                       label: 'Expected Delivery',
                       value:
-                          order.expectedDeliveryDate ==
-                                  null
+                          order.expectedDeliveryDate == null
                               ? '—'
                               : _formatDate(
                                   order.expectedDeliveryDate!,
@@ -194,6 +293,112 @@ class _PurchaseOrderCard extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _showEditOrderDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final result = await showDialog<PurchaseOrder>(
+      context: context,
+      builder: (context) {
+        return PurchaseOrderFormDialog(
+          projectId: projectId,
+          order: order,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderRepositoryProvider,
+    );
+
+    await repository.updatePurchaseOrder(
+      result,
+    );
+
+    ref.invalidate(
+      purchaseOrdersProvider(projectId),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Purchase order updated',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _archiveOrder(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Archive Purchase Order?',
+          ),
+          content: Text(
+            'Are you sure you want to archive '
+            '${order.poNumber}? '
+            'It will no longer appear in the active purchase order list.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Archive'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderRepositoryProvider,
+    );
+
+    await repository.archivePurchaseOrder(
+      order.id,
+    );
+
+    ref.invalidate(
+      purchaseOrdersProvider(projectId),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '${order.poNumber} archived',
+        ),
+      ),
+    );
+  }
 }
 
 class _InfoItem extends StatelessWidget {
@@ -206,10 +411,11 @@ class _InfoItem extends StatelessWidget {
   final String value;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -239,13 +445,14 @@ class _StatusChip extends StatelessWidget {
   final PurchaseOrderStatus status;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Chip(
       label: Text(
         _statusLabel(status),
       ),
-      visualDensity:
-          VisualDensity.compact,
+      visualDensity: VisualDensity.compact,
     );
   }
 }
@@ -254,7 +461,9 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return const Center(
       child: Padding(
         padding: EdgeInsets.all(
@@ -278,7 +487,9 @@ class _ErrorState extends StatelessWidget {
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(
@@ -309,7 +520,9 @@ class _ErrorState extends StatelessWidget {
             ),
             FilledButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: const Text(
+                'Retry',
+              ),
             ),
           ],
         ),

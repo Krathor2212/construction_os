@@ -8,6 +8,7 @@ class ProjectContact {
     this.email,
     this.company,
     this.notes,
+    this.isArchived = false,
   });
 
   final String id;
@@ -19,6 +20,10 @@ class ProjectContact {
   final String? email;
   final String? company;
   final String? notes;
+
+  /// Archived contacts are retained for project history
+  /// but excluded from the active contact list.
+  final bool isArchived;
 }
 
 enum ProjectContactRole {

@@ -51,10 +51,14 @@ class MockProjectContactRepository implements ProjectContactRepository {
   ];
 
   @override
-  Future<List<ProjectContact>> getContacts(String projectId) async {
+  Future<List<ProjectContact>> getContacts(
+    String projectId,
+  ) async {
     return List.unmodifiable(
       _contacts.where(
-        (contact) => contact.projectId == projectId,
+        (contact) =>
+            contact.projectId == projectId &&
+            !contact.isArchived,
       ),
     );
   }
@@ -91,9 +95,27 @@ class MockProjectContactRepository implements ProjectContactRepository {
   }
 
   @override
-  Future<void> deleteContact(String id) async {
-    _contacts.removeWhere(
-      (contact) => contact.id == id,
-    );
-  }
+    Future<void> archiveContact(String id) async {
+      final index = _contacts.indexWhere(
+        (contact) => contact.id == id,
+      );
+
+      if (index == -1) {
+        throw StateError('Contact not found: $id');
+      }
+
+      final contact = _contacts[index];
+
+      _contacts[index] = ProjectContact(
+        id: contact.id,
+        projectId: contact.projectId,
+        name: contact.name,
+        role: contact.role,
+        phone: contact.phone,
+        email: contact.email,
+        company: contact.company,
+        notes: contact.notes,
+        isArchived: true,
+      );
+    }
 }

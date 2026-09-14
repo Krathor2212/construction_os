@@ -6,6 +6,7 @@ import '../../domain/entities/purchase_quotation.dart';
 import '../providers/purchase_quotation_providers.dart';
 import '../providers/supplier_providers.dart';
 import '../widgets/purchase_quotation_form_dialog.dart';
+import 'package:go_router/go_router.dart';  
 
 class PurchaseQuotationsPage extends ConsumerWidget {
   const PurchaseQuotationsPage({
@@ -137,6 +138,13 @@ class _PurchaseQuotationCard extends ConsumerWidget {
     );
 
     return Card(
+        child: InkWell(
+      onTap: () {
+        context.push(
+          '/projects/$projectId/purchase-quotations/${quotation.id}',
+        );
+      },
+      borderRadius: BorderRadius.circular(12),
       child: Padding(
         padding: const EdgeInsets.all(
           AppSpacing.md,
@@ -247,6 +255,7 @@ class _PurchaseQuotationCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

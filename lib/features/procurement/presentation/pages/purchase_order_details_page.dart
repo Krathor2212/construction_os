@@ -85,6 +85,16 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
                   ref,
                   order.id,
                 ),
+                onEditItem: (item) => _showEditItemDialog(
+                  context,
+                  ref,
+                  item,
+                ),
+                onDeleteItem: (item) => _deleteItem(
+                  context,
+                  ref,
+                  item,
+                ),
               ),
             ],
           ),
@@ -133,6 +143,125 @@ class PurchaseOrderDetailsPage extends ConsumerWidget {
       const SnackBar(
         content: Text(
           'Purchase order item added',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showEditItemDialog(
+    BuildContext context,
+    WidgetRef ref,
+    PurchaseOrderItem item,
+  ) async {
+    final result = await showDialog<PurchaseOrderItem>(
+      context: context,
+      builder: (context) {
+        return PurchaseOrderItemFormDialog(
+          purchaseOrderId: item.purchaseOrderId,
+          item: item,
+        );
+      },
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderItemRepositoryProvider,
+    );
+
+    await repository.updateItem(
+      result,
+    );
+
+    ref.invalidate(
+      purchaseOrderItemsProvider(
+        item.purchaseOrderId,
+      ),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Purchase order item updated',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deleteItem(
+    BuildContext context,
+    WidgetRef ref,
+    PurchaseOrderItem item,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text(
+            'Delete PO Item?',
+          ),
+          content: Text(
+            'Are you sure you want to delete '
+            '"${item.description}" from this purchase order?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(
+                  false,
+                );
+              },
+              child: const Text(
+                'Cancel',
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(
+                  true,
+                );
+              },
+              child: const Text(
+                'Delete',
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final repository = ref.read(
+      purchaseOrderItemRepositoryProvider,
+    );
+
+    await repository.deleteItem(
+      item.id,
+    );
+
+    ref.invalidate(
+      purchaseOrderItemsProvider(
+        item.purchaseOrderId,
+      ),
+    );
+
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Purchase order item deleted',
         ),
       ),
     );
@@ -319,10 +448,14 @@ class _LineItemsSection extends ConsumerWidget {
   const _LineItemsSection({
     required this.order,
     required this.onAddItem,
+    required this.onEditItem,
+    required this.onDeleteItem,
   });
 
   final PurchaseOrder order;
   final VoidCallback onAddItem;
+  final ValueChanged<PurchaseOrderItem> onEditItem;
+  final ValueChanged<PurchaseOrderItem> onDeleteItem;
 
   @override
   Widget build(
@@ -430,6 +563,12 @@ class _LineItemsSection extends ConsumerWidget {
                   ),
                   child: _LineItemCard(
                     item: item,
+                    onEdit: () => onEditItem(
+                      item,
+                    ),
+                    onDelete: () => onDeleteItem(
+                      item,
+                    ),
                   ),
                 ),
               ),
@@ -453,9 +592,13 @@ class _LineItemsSection extends ConsumerWidget {
 class _LineItemCard extends ConsumerWidget {
   const _LineItemCard({
     required this.item,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final PurchaseOrderItem item;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(
@@ -498,16 +641,41 @@ class _LineItemCard extends ConsumerWidget {
                         ),
                   ),
                 ),
-                Text(
-                  _formatCurrency(
-                    item.total,
-                  ),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
-                        fontWeight: FontWeight.w700,
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'edit':
+                        onEdit();
+                        break;
+                      case 'delete':
+                        onDelete();
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => const [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.edit_outlined,
+                        ),
+                        title: Text('Edit'),
+                        contentPadding:
+                            EdgeInsets.zero,
                       ),
+                    ),
+                    PopupMenuItem(
+                      value: 'delete',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.delete_outline,
+                        ),
+                        title: Text('Delete'),
+                        contentPadding:
+                            EdgeInsets.zero,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

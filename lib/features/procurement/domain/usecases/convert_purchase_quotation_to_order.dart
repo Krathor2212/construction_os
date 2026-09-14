@@ -43,6 +43,25 @@ class ConvertPurchaseQuotationToOrder {
       );
     }
 
+    // Prevent the same quotation from being converted more than once.
+    final existingOrders =
+        await purchaseOrderRepository.getPurchaseOrders(
+      quotation.projectId,
+    );
+
+    final alreadyConverted = existingOrders.any(
+      (order) =>
+          !order.isArchived &&
+          order.purchaseQuotationId == quotation.id,
+    );
+
+    if (alreadyConverted) {
+      throw StateError(
+        'This purchase quotation has already been converted '
+        'to a purchase order.',
+      );
+    }
+
     final quotationItems =
         await purchaseQuotationItemRepository.getItems(
       quotationId,
@@ -54,6 +73,8 @@ class ConvertPurchaseQuotationToOrder {
       );
     }
 
+    // PO subtotal and tax are derived from PO line items.
+    // Discount and delivery charges remain quotation-level values.
     final order = PurchaseOrder(
       id:
           'purchase-order-${DateTime.now().microsecondsSinceEpoch}',
@@ -63,8 +84,8 @@ class ConvertPurchaseQuotationToOrder {
       poNumber: poNumber,
       orderDate: orderDate ?? DateTime.now(),
       expectedDeliveryDate: expectedDeliveryDate,
-      subtotal: quotation.subtotal,
-      tax: quotation.tax,
+      subtotal: 0,
+      tax: 0,
       discount: quotation.discount,
       deliveryCharges: quotation.deliveryCharges,
       paymentTerms: quotation.paymentTerms,

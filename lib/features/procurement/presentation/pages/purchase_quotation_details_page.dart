@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../../materials/presentation/providers/material_providers.dart';
 import '../../domain/entities/purchase_quotation.dart';
 import '../../domain/entities/purchase_quotation_item.dart';
+import '../providers/convert_purchase_quotation_to_order_provider.dart';
+import '../providers/purchase_order_providers.dart';
 import '../providers/purchase_quotation_item_providers.dart';
 import '../providers/purchase_quotation_providers.dart';
 import '../providers/supplier_providers.dart';
+import '../widgets/convert_purchase_quotation_dialog.dart';
 import '../widgets/purchase_quotation_item_form_dialog.dart';
 
 class PurchaseQuotationDetailsPage extends ConsumerWidget {
@@ -45,6 +49,7 @@ class PurchaseQuotationDetailsPage extends ConsumerWidget {
         data: (quotation) {
           return _QuotationDetails(
             quotation: quotation,
+            projectId: projectId,
           );
         },
       ),
@@ -52,15 +57,28 @@ class PurchaseQuotationDetailsPage extends ConsumerWidget {
   }
 }
 
-class _QuotationDetails extends ConsumerWidget {
+class _QuotationDetails extends ConsumerStatefulWidget {
   const _QuotationDetails({
     required this.quotation,
+    required this.projectId,
   });
 
   final PurchaseQuotation quotation;
+  final String projectId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_QuotationDetails> createState() =>
+      _QuotationDetailsState();
+}
+
+class _QuotationDetailsState
+    extends ConsumerState<_QuotationDetails> {
+  bool _isConverting = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final quotation = widget.quotation;
+
     final supplierAsync = ref.watch(
       supplierProvider(quotation.supplierId),
     );
@@ -80,6 +98,7 @@ class _QuotationDetails extends ConsumerWidget {
         ref.invalidate(
           purchaseQuotationProvider(quotation.id),
         );
+
         ref.invalidate(
           purchaseQuotationItemsProvider(quotation.id),
         );
@@ -96,6 +115,12 @@ class _QuotationDetails extends ConsumerWidget {
           _HeaderCard(
             quotation: quotation,
             supplierName: supplierName,
+            isConverting: _isConverting,
+            onConvert:
+                quotation.status ==
+                        PurchaseQuotationStatus.accepted
+                    ? () => _convertQuotation(context)
+                    : null,
           ),
           const SizedBox(
             height: AppSpacing.md,
@@ -133,16 +158,121 @@ class _QuotationDetails extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _convertQuotation(
+    BuildContext context,
+  ) async {
+    if (_isConverting) {
+      return;
+    }
+
+    final quotation = widget.quotation;
+
+    if (quotation.status !=
+        PurchaseQuotationStatus.accepted) {
+      return;
+    }
+
+    final now = DateTime.now();
+
+    final defaultPoNumber =
+        'PO-${now.year}-${quotation.id.split('-').last}';
+
+    final result =
+        await showDialog<ConvertPurchaseQuotationResult>(
+      context: context,
+      builder: (_) {
+        return ConvertPurchaseQuotationDialog(
+          defaultPoNumber: defaultPoNumber,
+        );
+      },
+    );
+
+    if (result == null || !context.mounted) {
+      return;
+    }
+
+    setState(() {
+      _isConverting = true;
+    });
+
+    try {
+      final convertUseCase = ref.read(
+        convertPurchaseQuotationToOrderProvider,
+      );
+
+      final createdOrder =
+          await convertUseCase.execute(
+        quotationId: quotation.id,
+        poNumber: result.poNumber,
+        orderDate: result.orderDate,
+        expectedDeliveryDate:
+            result.expectedDeliveryDate,
+      );
+
+      // Refresh the Purchase Orders list so the newly
+      // created order appears immediately.
+      ref.invalidate(
+        purchaseOrdersProvider(widget.projectId),
+      );
+
+      // Refresh the quotation after conversion.
+      ref.invalidate(
+        purchaseQuotationProvider(quotation.id),
+      );
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Purchase order created successfully.',
+          ),
+        ),
+      );
+
+      // push() preserves the navigation history.
+      // Android Back will return to this quotation page.
+      context.push(
+        '/projects/${widget.projectId}/purchase-orders/'
+        '${createdOrder.id}',
+      );
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to convert quotation: $error',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConverting = false;
+        });
+      }
+    }
+  }
 }
 
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
     required this.quotation,
     required this.supplierName,
+    required this.isConverting,
+    required this.onConvert,
   });
 
   final PurchaseQuotation quotation;
   final String supplierName;
+  final bool isConverting;
+  final VoidCallback? onConvert;
 
   @override
   Widget build(BuildContext context) {
@@ -152,10 +282,12 @@ class _HeaderCard extends StatelessWidget {
           AppSpacing.md,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -179,6 +311,35 @@ class _HeaderCard extends StatelessWidget {
                   .textTheme
                   .titleMedium,
             ),
+            if (onConvert != null) ...[
+              const SizedBox(
+                height: AppSpacing.md,
+              ),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed:
+                      isConverting ? null : onConvert,
+                  icon: isConverting
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child:
+                              CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.receipt_long_outlined,
+                        ),
+                  label: Text(
+                    isConverting
+                        ? 'Creating Purchase Order...'
+                        : 'Convert to Purchase Order',
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -186,7 +347,8 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
-class _QuotationInformationCard extends StatelessWidget {
+class _QuotationInformationCard
+    extends StatelessWidget {
   const _QuotationInformationCard({
     required this.quotation,
   });
@@ -201,7 +363,8 @@ class _QuotationInformationCard extends StatelessWidget {
           AppSpacing.md,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Text(
               'Quotation Information',
@@ -235,7 +398,9 @@ class _QuotationInformationCard extends StatelessWidget {
               ],
             ),
             if (quotation.paymentTerms != null &&
-                quotation.paymentTerms!.trim().isNotEmpty) ...[
+                quotation.paymentTerms!
+                    .trim()
+                    .isNotEmpty) ...[
               const SizedBox(
                 height: AppSpacing.md,
               ),
@@ -245,7 +410,9 @@ class _QuotationInformationCard extends StatelessWidget {
               ),
             ],
             if (quotation.deliveryTerms != null &&
-                quotation.deliveryTerms!.trim().isNotEmpty) ...[
+                quotation.deliveryTerms!
+                    .trim()
+                    .isNotEmpty) ...[
               const SizedBox(
                 height: AppSpacing.sm,
               ),
@@ -279,7 +446,10 @@ class _LineItemsSection extends ConsumerWidget {
   final String quotationId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final itemsAsync = ref.watch(
       purchaseQuotationItemsProvider(quotationId),
     );
@@ -298,7 +468,8 @@ class _LineItemsSection extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (error, stackTrace) => _LineItemsError(
+          error: (error, stackTrace) =>
+              _LineItemsError(
             message: error.toString(),
             onRetry: () {
               ref.invalidate(
@@ -310,7 +481,8 @@ class _LineItemsSection extends ConsumerWidget {
           ),
           data: (items) {
             return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
@@ -372,7 +544,8 @@ class _LineItemsSection extends ConsumerWidget {
   ) async {
     final saved = await showDialog<bool>(
       context: context,
-      builder: (_) => PurchaseQuotationItemFormDialog(
+      builder: (_) =>
+          PurchaseQuotationItemFormDialog(
         quotationId: quotationId,
       ),
     );
@@ -407,7 +580,10 @@ class _LineItemTile extends ConsumerWidget {
   final String quotationId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final materialAsync = ref.watch(
       materialProvider(item.materialId),
     );
@@ -423,10 +599,12 @@ class _LineItemTile extends ConsumerWidget {
         vertical: AppSpacing.xs,
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
@@ -517,7 +695,8 @@ class _LineItemTile extends ConsumerWidget {
   ) async {
     final saved = await showDialog<bool>(
       context: context,
-      builder: (_) => PurchaseQuotationItemFormDialog(
+      builder: (_) =>
+          PurchaseQuotationItemFormDialog(
         quotationId: quotationId,
         item: item,
       ),
@@ -559,13 +738,17 @@ class _LineItemTile extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(false);
+                Navigator.of(dialogContext).pop(
+                  false,
+                );
               },
               child: const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.of(dialogContext).pop(true);
+                Navigator.of(dialogContext).pop(
+                  true,
+                );
               },
               child: const Text('Delete'),
             ),
@@ -583,9 +766,7 @@ class _LineItemTile extends ConsumerWidget {
         purchaseQuotationItemRepositoryProvider,
       );
 
-      await repository.deleteItem(
-        item.id,
-      );
+      await repository.deleteItem(item.id);
 
       ref.invalidate(
         purchaseQuotationItemsProvider(
@@ -616,7 +797,8 @@ class _LineItemTile extends ConsumerWidget {
   }
 }
 
-class _FinancialSummaryCard extends StatelessWidget {
+class _FinancialSummaryCard
+    extends StatelessWidget {
   const _FinancialSummaryCard({
     required this.subtotal,
     required this.tax,
@@ -643,7 +825,8 @@ class _FinancialSummaryCard extends StatelessWidget {
           AppSpacing.md,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
           children: [
             Text(
               'Financial Summary',
@@ -711,7 +894,8 @@ class _FinancialSummaryCard extends StatelessWidget {
   }
 }
 
-class _FinancialLoadingCard extends StatelessWidget {
+class _FinancialLoadingCard
+    extends StatelessWidget {
   const _FinancialLoadingCard();
 
   @override
@@ -827,7 +1011,8 @@ class _NoLineItems extends StatelessWidget {
   }
 }
 
-class _LineItemsError extends StatelessWidget {
+class _LineItemsError
+    extends StatelessWidget {
   const _LineItemsError({
     required this.message,
     required this.onRetry,
@@ -839,7 +1024,8 @@ class _LineItemsError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Text(
           'Unable to load line items.',
@@ -879,7 +1065,8 @@ class _InfoItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -914,7 +1101,8 @@ class _StatusChip extends StatelessWidget {
       label: Text(
         _statusLabel(status),
       ),
-      visualDensity: VisualDensity.compact,
+      visualDensity:
+          VisualDensity.compact,
     );
   }
 }
@@ -936,7 +1124,8 @@ class _ErrorState extends StatelessWidget {
           AppSpacing.lg,
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
             const Icon(
               Icons.error_outline,
@@ -1011,19 +1200,14 @@ String _statusLabel(
   switch (status) {
     case PurchaseQuotationStatus.draft:
       return 'Draft';
-
     case PurchaseQuotationStatus.received:
       return 'Received';
-
     case PurchaseQuotationStatus.underReview:
       return 'Under Review';
-
     case PurchaseQuotationStatus.accepted:
       return 'Accepted';
-
     case PurchaseQuotationStatus.rejected:
       return 'Rejected';
-
     case PurchaseQuotationStatus.expired:
       return 'Expired';
   }

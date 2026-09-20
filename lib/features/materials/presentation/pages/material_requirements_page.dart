@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/material_requirement.dart';
+import '../../domain/entities/material_requirement_procurement.dart';
 import '../providers/material_providers.dart';
 import '../providers/material_requirement_procurement_providers.dart';
 import '../providers/material_requirement_providers.dart';
 import '../widgets/material_requirement_form_dialog.dart';
 import '../widgets/material_requirement_procurement_form_dialog.dart';
-import '../../domain/entities/material_requirement_procurement.dart';
 
 class MaterialRequirementsPage extends ConsumerWidget {
   const MaterialRequirementsPage({
@@ -32,12 +32,15 @@ class MaterialRequirementsPage extends ConsumerWidget {
       return;
     }
 
-    final repository =
-        ref.read(materialRequirementRepositoryProvider);
+    final repository = ref.read(
+      materialRequirementRepositoryProvider,
+    );
 
     await repository.createRequirement(requirement);
 
-    ref.invalidate(materialRequirementsProvider(projectId));
+    ref.invalidate(
+      materialRequirementsProvider(projectId),
+    );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,12 +69,17 @@ class MaterialRequirementsPage extends ConsumerWidget {
       return;
     }
 
-    final repository =
-        ref.read(materialRequirementRepositoryProvider);
+    final repository = ref.read(
+      materialRequirementRepositoryProvider,
+    );
 
-    await repository.updateRequirement(updatedRequirement);
+    await repository.updateRequirement(
+      updatedRequirement,
+    );
 
-    ref.invalidate(materialRequirementsProvider(projectId));
+    ref.invalidate(
+      materialRequirementsProvider(projectId),
+    );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -117,12 +125,17 @@ class MaterialRequirementsPage extends ConsumerWidget {
       return;
     }
 
-    final repository =
-        ref.read(materialRequirementRepositoryProvider);
+    final repository = ref.read(
+      materialRequirementRepositoryProvider,
+    );
 
-    await repository.archiveRequirement(requirement.id);
+    await repository.archiveRequirement(
+      requirement.id,
+    );
 
-    ref.invalidate(materialRequirementsProvider(projectId));
+    ref.invalidate(
+      materialRequirementsProvider(projectId),
+    );
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -279,12 +292,8 @@ class _RequirementCard extends ConsumerWidget {
       return;
     }
 
-    final repository = ref.read(
-      materialRequirementProcurementRepositoryProvider,
-    );
-
-    await repository.createProcurement(procurement);
-
+    // The dialog already creates the procurement.
+    // We only refresh the related providers here.
     ref.invalidate(
       materialRequirementProcurementsProvider(
         requirement.id,
@@ -318,14 +327,8 @@ class _RequirementCard extends ConsumerWidget {
       return;
     }
 
-    final repository = ref.read(
-      materialRequirementProcurementRepositoryProvider,
-    );
-
-    await repository.updateProcurement(
-      updatedProcurement,
-    );
-
+    // The dialog already updates the procurement.
+    // We only refresh the related providers here.
     ref.invalidate(
       materialRequirementProcurementsProvider(
         requirement.id,
@@ -400,8 +403,9 @@ class _RequirementCard extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) {
-    final materialAsync =
-        ref.watch(materialProvider(requirement.materialId));
+    final materialAsync = ref.watch(
+      materialProvider(requirement.materialId),
+    );
 
     final materialName = materialAsync.when(
       loading: () => 'Loading material...',
@@ -463,18 +467,14 @@ class _RequirementCard extends ConsumerWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
-
             Text(
               '${requirement.quantity} ${requirement.unit}',
               style: Theme.of(context)
                   .textTheme
                   .bodyLarge,
             ),
-
             const SizedBox(height: 8),
-
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -497,7 +497,6 @@ class _RequirementCard extends ConsumerWidget {
                   ),
               ],
             ),
-
             if (requirement.phaseId != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -507,7 +506,6 @@ class _RequirementCard extends ConsumerWidget {
                     .bodyMedium,
               ),
             ],
-
             if (requirement.notes != null &&
                 requirement.notes!.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -518,9 +516,7 @@ class _RequirementCard extends ConsumerWidget {
                     .bodyMedium,
               ),
             ],
-
             const Divider(height: 24),
-
             Row(
               children: [
                 Expanded(
@@ -536,21 +532,23 @@ class _RequirementCard extends ConsumerWidget {
                     context,
                     ref,
                   ),
-                  icon: const Icon(Icons.add, size: 18),
+                  icon: const Icon(
+                    Icons.add,
+                    size: 18,
+                  ),
                   label: const Text('Add'),
                 ),
               ],
             ),
-
             const SizedBox(height: 8),
-
             summaryAsync.when(
               loading: () => const Padding(
-                padding:
-                    EdgeInsets.symmetric(vertical: 8),
+                padding: EdgeInsets.symmetric(
+                  vertical: 8,
+                ),
                 child: LinearProgressIndicator(),
               ),
-              error: (_, _) => Text(
+              error: (_,_) => Text(
                 'Procurement data unavailable.',
                 style: TextStyle(
                   color: Theme.of(context)
@@ -591,16 +589,11 @@ class _RequirementCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 12),
-
                     LinearProgressIndicator(
-                      value:
-                          summary.procurementPercentage,
+                      value: summary.procurementPercentage,
                     ),
-
                     const SizedBox(height: 6),
-
                     Text(
                       '${(summary.procurementPercentage * 100).toStringAsFixed(0)}% procured',
                       style: Theme.of(context)
@@ -611,12 +604,11 @@ class _RequirementCard extends ConsumerWidget {
                 );
               },
             ),
-
             const SizedBox(height: 16),
-
             procurementsAsync.when(
               loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
+              error: (_, _) =>
+                  const SizedBox.shrink(),
               data: (procurements) {
                 if (procurements.isEmpty) {
                   return Text(
@@ -631,8 +623,7 @@ class _RequirementCard extends ConsumerWidget {
                   children: procurements.map(
                     (procurement) {
                       return ListTile(
-                        contentPadding:
-                            EdgeInsets.zero,
+                        contentPadding: EdgeInsets.zero,
                         leading: const Icon(
                           Icons.local_shipping_outlined,
                         ),
@@ -750,4 +741,3 @@ class _ProcurementValue extends StatelessWidget {
     );
   }
 }
-  

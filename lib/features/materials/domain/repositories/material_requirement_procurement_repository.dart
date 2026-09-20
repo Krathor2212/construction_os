@@ -5,11 +5,18 @@ abstract interface class MaterialRequirementProcurementRepository {
     String materialRequirementId,
   );
 
-  Future<MaterialRequirementProcurement>
-      createProcurement(MaterialRequirementProcurement procurement);
+  Future<List<MaterialRequirementProcurement>>
+      getProcurementsByPurchaseOrderItem(
+    String purchaseOrderItemId,
+  );
 
-  Future<MaterialRequirementProcurement>
-      updateProcurement(MaterialRequirementProcurement procurement);
+  Future<MaterialRequirementProcurement> createProcurement(
+    MaterialRequirementProcurement procurement,
+  );
+
+  Future<MaterialRequirementProcurement> updateProcurement(
+    MaterialRequirementProcurement procurement,
+  );
 
   Future<void> deleteProcurement(String id);
 }

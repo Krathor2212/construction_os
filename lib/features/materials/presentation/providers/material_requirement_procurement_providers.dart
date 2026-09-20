@@ -21,6 +21,20 @@ final materialRequirementProcurementsProvider =
   },
 );
 
+final materialRequirementProcurementsByPurchaseOrderItemProvider =
+    FutureProvider.family<
+        List<MaterialRequirementProcurement>,
+        String>(
+  (ref, purchaseOrderItemId) async {
+    final repository =
+        ref.watch(materialRequirementProcurementRepositoryProvider);
+
+    return repository.getProcurementsByPurchaseOrderItem(
+      purchaseOrderItemId,
+    );
+  },
+);
+
 final calculateMaterialRequirementProcurementProvider =
     Provider<CalculateMaterialRequirementProcurement>((ref) {
   return const CalculateMaterialRequirementProcurement();

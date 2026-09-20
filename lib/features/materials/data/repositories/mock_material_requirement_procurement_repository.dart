@@ -8,6 +8,7 @@ class MockMaterialRequirementProcurementRepository
       id: 'requirement-procurement-001',
       materialRequirementId: 'material-requirement-001',
       purchaseOrderId: 'purchase-order-002',
+      purchaseOrderItemId: 'purchase-order-item-002',
       quantity: 300,
       notes: 'Initial cement procurement.',
     ),
@@ -15,6 +16,7 @@ class MockMaterialRequirementProcurementRepository
       id: 'requirement-procurement-002',
       materialRequirementId: 'material-requirement-002',
       purchaseOrderId: 'purchase-order-001',
+      purchaseOrderItemId: 'purchase-order-item-001',
       quantity: 1500,
       notes: 'TMT steel ordered for structural work.',
     ),
@@ -28,6 +30,19 @@ class MockMaterialRequirementProcurementRepository
         .where(
           (procurement) =>
               procurement.materialRequirementId == materialRequirementId,
+        )
+        .toList();
+  }
+
+  @override
+  Future<List<MaterialRequirementProcurement>>
+      getProcurementsByPurchaseOrderItem(
+    String purchaseOrderItemId,
+  ) async {
+    return _procurements
+        .where(
+          (procurement) =>
+              procurement.purchaseOrderItemId == purchaseOrderItemId,
         )
         .toList();
   }
@@ -49,7 +64,9 @@ class MockMaterialRequirementProcurementRepository
     );
 
     if (index == -1) {
-      throw StateError('Procurement record not found.');
+      throw StateError(
+        'Procurement ${procurement.id} not found.',
+      );
     }
 
     _procurements[index] = procurement;
@@ -58,14 +75,8 @@ class MockMaterialRequirementProcurementRepository
 
   @override
   Future<void> deleteProcurement(String id) async {
-    final index = _procurements.indexWhere(
+    _procurements.removeWhere(
       (procurement) => procurement.id == id,
     );
-
-    if (index == -1) {
-      throw StateError('Procurement record not found.');
-    }
-
-    _procurements.removeAt(index);
   }
 }

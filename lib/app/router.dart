@@ -14,6 +14,7 @@ import '../features/procurement/presentation/pages/purchase_quotation_details_pa
 import '../features/procurement/presentation/pages/purchase_orders_page.dart';
 import '../features/procurement/presentation/pages/purchase_order_details_page.dart';
 import '../features/materials/presentation/pages/material_requirements_page.dart';
+import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -138,5 +139,22 @@ final GoRouter appRouter = GoRouter(
         );
       },
     ),
+
+    GoRoute(
+      path: '/workers/:workerId/attendance',
+      builder: (context, state) {
+        final workerId =
+            state.pathParameters['workerId']!;
+
+        final workerName =
+            state.uri.queryParameters['workerName'] ??
+                'Worker';
+
+        return WorkerAttendancePage(
+          workerId: workerId,
+          workerName: workerName,
+        );
+      },
+),
   ],
 );

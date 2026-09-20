@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/worker.dart';
@@ -29,7 +30,9 @@ class WorkersPage extends ConsumerWidget {
           }
 
           return ListView.separated(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.all(
+              AppSpacing.md,
+            ),
             itemCount: workers.length,
             separatorBuilder: (_, _) => const SizedBox(
               height: AppSpacing.sm,
@@ -44,7 +47,9 @@ class WorkersPage extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {},
-        icon: const Icon(Icons.person_add_outlined),
+        icon: const Icon(
+          Icons.person_add_outlined,
+        ),
         label: const Text('Add Worker'),
       ),
     );
@@ -58,11 +63,20 @@ class _WorkerCard extends StatelessWidget {
 
   final Worker worker;
 
+  void _openAttendance(BuildContext context) {
+    context.push(
+      '/workers/${worker.id}/attendance'
+      '?workerName=${Uri.encodeComponent(worker.name)}',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.all(
+          AppSpacing.md,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,10 +89,13 @@ class _WorkerCard extends StatelessWidget {
                         : '?',
                   ),
                 ),
-                const SizedBox(width: AppSpacing.sm),
+                const SizedBox(
+                  width: AppSpacing.sm,
+                ),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
                         worker.name,
@@ -86,7 +103,9 @@ class _WorkerCard extends StatelessWidget {
                             .textTheme
                             .titleMedium,
                       ),
-                      const SizedBox(height: AppSpacing.xxs),
+                      const SizedBox(
+                        height: AppSpacing.xxs,
+                      ),
                       Text(
                         _roleLabel(worker.role),
                         style: Theme.of(context)
@@ -101,25 +120,51 @@ class _WorkerCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
             const Divider(),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(
+              height: AppSpacing.sm,
+            ),
             _WorkerInfoRow(
               icon: Icons.phone_outlined,
               text: worker.phone,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(
+              height: AppSpacing.xs,
+            ),
             _WorkerInfoRow(
               icon: Icons.payments_outlined,
-              text: '₹${worker.dailyWage.toStringAsFixed(0)} / day',
+              text:
+                  '₹${worker.dailyWage.toStringAsFixed(0)} / day',
             ),
             if (worker.notes != null) ...[
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(
+                height: AppSpacing.sm,
+              ),
               Text(
                 worker.notes!,
-                style: Theme.of(context).textTheme.bodySmall,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall,
               ),
             ],
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  _openAttendance(context);
+                },
+                icon: const Icon(
+                  Icons.event_available_outlined,
+                ),
+                label: const Text('Attendance'),
+              ),
+            ),
           ],
         ),
       ),
@@ -168,13 +213,19 @@ class _WorkerInfoRow extends StatelessWidget {
         Icon(
           icon,
           size: 18,
-          color: Theme.of(context).colorScheme.primary,
+          color: Theme.of(context)
+              .colorScheme
+              .primary,
         ),
-        const SizedBox(width: AppSpacing.sm),
+        const SizedBox(
+          width: AppSpacing.sm,
+        ),
         Expanded(
           child: Text(
             text,
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium,
           ),
         ),
       ],
@@ -207,26 +258,39 @@ class _EmptyWorkersState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
+        padding: const EdgeInsets.all(
+          AppSpacing.xl,
+        ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment:
+              MainAxisAlignment.center,
           children: [
             Icon(
               Icons.groups_outlined,
               size: 56,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(context)
+                  .colorScheme
+                  .primary,
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
             Text(
               'No workers yet',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge,
             ),
-            const SizedBox(height: AppSpacing.xs),
+            const SizedBox(
+              height: AppSpacing.xs,
+            ),
             Text(
               'Add your labour workforce to start tracking '
               'people, wages and productivity.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall,
             ),
           ],
         ),

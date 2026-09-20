@@ -15,6 +15,7 @@ import '../features/procurement/presentation/pages/purchase_orders_page.dart';
 import '../features/procurement/presentation/pages/purchase_order_details_page.dart';
 import '../features/materials/presentation/pages/material_requirements_page.dart';
 import '../features/workforce/presentation/pages/worker_attendance_page.dart';
+import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -155,6 +156,20 @@ final GoRouter appRouter = GoRouter(
           workerName: workerName,
         );
       },
-),
+    ),
+
+    GoRoute(
+      path: '/workers/:workerId/allocations',
+      builder: (context, state) {
+        final workerId = state.pathParameters['workerId']!;
+        final workerName =
+            state.uri.queryParameters['workerName'] ?? 'Worker';
+
+        return WorkerAllocationPage(
+          workerId: workerId,
+          workerName: workerName,
+        );
+      },
+    ),
   ],
 );

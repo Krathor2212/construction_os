@@ -7,6 +7,8 @@ import '../../domain/entities/project.dart';
 import '../providers/project_providers.dart';
 import '../widgets/project_form_dialog.dart';
 import '../../../workforce/presentation/providers/labour_cost_summary_providers.dart';
+import '../../../workforce/presentation/providers/labour_phase_cost_summary_providers.dart';
+import '../../../workforce/domain/entities/labour_phase_cost_summary.dart';
 
 class ProjectDetailsPage extends ConsumerWidget {
   const ProjectDetailsPage({
@@ -105,7 +107,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             project: project,
           ),
           const SizedBox(height: AppSpacing.lg),
-          _DailyLabourSummaryCard(
+          _LabourSummarySection(
             projectId: project.id,
           ),
           const SizedBox(height: AppSpacing.xl),
@@ -198,20 +200,20 @@ class _ProjectDetailsContent extends StatelessWidget {
   }
 }
 
-class _DailyLabourSummaryCard extends ConsumerStatefulWidget {
-  const _DailyLabourSummaryCard({
+class _LabourSummarySection extends ConsumerStatefulWidget {
+  const _LabourSummarySection({
     required this.projectId,
   });
 
   final String projectId;
 
   @override
-  ConsumerState<_DailyLabourSummaryCard> createState() =>
-      _DailyLabourSummaryCardState();
+  ConsumerState<_LabourSummarySection> createState() =>
+      _LabourSummarySectionState();
 }
 
-class _DailyLabourSummaryCardState
-    extends ConsumerState<_DailyLabourSummaryCard> {
+class _LabourSummarySectionState
+    extends ConsumerState<_LabourSummarySection> {
   late DateTime _selectedDate;
 
   @override
@@ -235,10 +237,71 @@ class _DailyLabourSummaryCardState
       endDate: _selectedDate,
     );
 
+    final phaseFilter = LabourPhaseCostSummaryFilter(
+      projectId: widget.projectId,
+      startDate: _selectedDate,
+      endDate: _selectedDate,
+    );
+
     final summaryAsync = ref.watch(
       labourCostSummaryProvider(filter),
     );
 
+    final phaseSummaryAsync = ref.watch(
+      labourPhaseCostSummaryProvider(phaseFilter),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _DailyLabourSummaryCard(
+          selectedDate: _selectedDate,
+          summaryAsync: summaryAsync,
+          onSelectDate: () => _selectDate(context),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _LabourCostByPhaseCard(
+          summaryAsync: phaseSummaryAsync,
+        ),
+      ],
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (selectedDate == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedDate = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+      );
+    });
+  }
+}
+
+class _DailyLabourSummaryCard extends StatelessWidget {
+  const _DailyLabourSummaryCard({
+    required this.selectedDate,
+    required this.summaryAsync,
+    required this.onSelectDate,
+  });
+
+  final DateTime selectedDate;
+  final AsyncValue summaryAsync;
+  final VoidCallback onSelectDate;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.md),
@@ -262,13 +325,13 @@ class _DailyLabourSummaryCardState
                   ),
                 ),
                 OutlinedButton.icon(
-                  onPressed: () => _selectDate(context),
+                  onPressed: onSelectDate,
                   icon: const Icon(
                     Icons.calendar_today_outlined,
                     size: 18,
                   ),
                   label: Text(
-                    _formatDate(_selectedDate),
+                    _formatDate(selectedDate),
                   ),
                 ),
               ],
@@ -376,31 +439,177 @@ class _DailyLabourSummaryCardState
     );
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final selectedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
-    );
-
-    if (selectedDate == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedDate = DateTime(
-        selectedDate.year,
-        selectedDate.month,
-        selectedDate.day,
-      );
-    });
-  }
-
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
+  }
+}
+
+class _LabourCostByPhaseCard extends StatelessWidget {
+  const _LabourCostByPhaseCard({
+    required this.summaryAsync,
+  });
+
+  final AsyncValue summaryAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.account_tree_outlined,
+                ),
+                const SizedBox(
+                  width: AppSpacing.sm,
+                ),
+                Expanded(
+                  child: Text(
+                    'Labour Cost by Phase',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+            const Divider(),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
+            summaryAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, stackTrace) => Text(
+                'Unable to load phase labour summary.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium,
+              ),
+              data: (summaries) {
+                if (summaries.isEmpty) {
+                  return Text(
+                    'No phase-wise labour records for this date.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium,
+                  );
+                }
+
+                return Column(
+                  children: [
+                    for (var index = 0;
+                        index < summaries.length;
+                        index++) ...[
+                      _LabourPhaseSummaryItem(
+                        summary: summaries[index],
+                      ),
+                      if (index < summaries.length - 1)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: AppSpacing.md,
+                          ),
+                          child: Divider(),
+                        ),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LabourPhaseSummaryItem extends StatelessWidget {
+  const _LabourPhaseSummaryItem({
+    required this.summary,
+  });
+
+  final LabourPhaseCostSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                summary.phaseName,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall,
+              ),
+            ),
+            Text(
+              '₹${summary.totalLabourCost.toStringAsFixed(2)}',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: AppSpacing.sm,
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: _LabourSummaryItem(
+                label: 'Workers',
+                value: '${summary.workerCount}',
+              ),
+            ),
+            Expanded(
+              child: _LabourSummaryItem(
+                label: 'Present',
+                value: '${summary.presentWorkers}',
+              ),
+            ),
+            Expanded(
+              child: _LabourSummaryItem(
+                label: 'Half Day',
+                value: '${summary.halfDayWorkers}',
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(
+          height: AppSpacing.sm,
+        ),
+        _LabourCostRow(
+          label: 'Base Labour',
+          amount: summary.baseLabourCost,
+        ),
+        const SizedBox(
+          height: AppSpacing.xs,
+        ),
+        _LabourCostRow(
+          label: 'Overtime',
+          amount: summary.overtimeCost,
+        ),
+      ],
+    );
   }
 }
 

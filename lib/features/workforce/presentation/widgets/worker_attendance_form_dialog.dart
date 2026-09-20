@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/theme/app_spacing.dart';
+import '../../../projects/presentation/providers/project_providers.dart';
 import '../../domain/entities/worker_attendance.dart';
 
-class WorkerAttendanceFormDialog
-    extends ConsumerStatefulWidget {
+class WorkerAttendanceFormDialog extends ConsumerStatefulWidget {
   const WorkerAttendanceFormDialog({
     super.key,
     required this.workerId,
@@ -25,11 +26,10 @@ class _WorkerAttendanceFormDialogState
 
   late DateTime _selectedDate;
   AttendanceStatus _status = AttendanceStatus.present;
-
   String? _projectId;
 
-  late final TextEditingController _hoursController;
-  late final TextEditingController _overtimeController;
+  late final TextEditingController _hoursWorkedController;
+  late final TextEditingController _overtimeHoursController;
   late final TextEditingController _notesController;
 
   @override
@@ -38,19 +38,15 @@ class _WorkerAttendanceFormDialogState
 
     final attendance = widget.attendance;
 
-    _selectedDate =
-        attendance?.date ?? DateTime.now();
-
-    _status =
-        attendance?.status ?? AttendanceStatus.present;
-
+    _selectedDate = attendance?.date ?? DateTime.now();
+    _status = attendance?.status ?? AttendanceStatus.present;
     _projectId = attendance?.projectId;
 
-    _hoursController = TextEditingController(
+    _hoursWorkedController = TextEditingController(
       text: attendance?.hoursWorked.toString() ?? '8',
     );
 
-    _overtimeController = TextEditingController(
+    _overtimeHoursController = TextEditingController(
       text: attendance?.overtimeHours.toString() ?? '0',
     );
 
@@ -61,8 +57,8 @@ class _WorkerAttendanceFormDialogState
 
   @override
   void dispose() {
-    _hoursController.dispose();
-    _overtimeController.dispose();
+    _hoursWorkedController.dispose();
+    _overtimeHoursController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -84,60 +80,38 @@ class _WorkerAttendanceFormDialogState
     });
   }
 
-  void _onStatusChanged(AttendanceStatus? value) {
-    if (value == null) {
-      return;
-    }
-
-    setState(() {
-      _status = value;
-
-      if (_status == AttendanceStatus.absent ||
-          _status == AttendanceStatus.leave) {
-        _hoursController.text = '0';
-        _overtimeController.text = '0';
-      } else if (_status == AttendanceStatus.halfDay) {
-        _hoursController.text = '4';
-        _overtimeController.text = '0';
-      } else if (_status == AttendanceStatus.present &&
-          _hoursController.text.trim() == '0') {
-        _hoursController.text = '8';
-      }
-    });
-  }
-
   void _onProjectChanged(String? value) {
     setState(() {
       _projectId = value;
     });
   }
 
-  Future<void> _submit() async {
+  void _submit() {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     final hoursWorked = double.tryParse(
-      _hoursController.text.trim(),
+      _hoursWorkedController.text.trim(),
     );
 
     final overtimeHours = double.tryParse(
-      _overtimeController.text.trim(),
+      _overtimeHoursController.text.trim(),
     );
 
-    if (hoursWorked == null ||
-        overtimeHours == null) {
+    if (hoursWorked == null || overtimeHours == null) {
       return;
     }
 
     final attendance = WorkerAttendance(
       id: widget.attendance?.id ??
-          'worker-attendance-${DateTime.now().millisecondsSinceEpoch}',
+          'worker-attendance-'
+              '${DateTime.now().millisecondsSinceEpoch}',
       workerId: widget.workerId,
       date: _selectedDate,
       status: _status,
       projectId: _projectId,
-      phaseId: null,
+      phaseId: widget.attendance?.phaseId,
       hoursWorked: hoursWorked,
       overtimeHours: overtimeHours,
       notes: _notesController.text.trim().isEmpty
@@ -145,28 +119,13 @@ class _WorkerAttendanceFormDialogState
           : _notesController.text.trim(),
     );
 
-    if (!mounted) {
-      return;
-    }
-
     Navigator.of(context).pop(attendance);
-  }
-
-  String _formatStatus(AttendanceStatus status) {
-    switch (status) {
-      case AttendanceStatus.present:
-        return 'Present';
-      case AttendanceStatus.halfDay:
-        return 'Half Day';
-      case AttendanceStatus.absent:
-        return 'Absent';
-      case AttendanceStatus.leave:
-        return 'Leave';
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final projectsAsync = ref.watch(projectsProvider);
+
     return AlertDialog(
       title: Text(
         widget.attendance == null
@@ -197,28 +156,95 @@ class _WorkerAttendanceFormDialogState
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
+
             DropdownButtonFormField<AttendanceStatus>(
               initialValue: _status,
               decoration: const InputDecoration(
                 labelText: 'Status',
                 border: OutlineInputBorder(),
               ),
-              items: AttendanceStatus.values.map(
-                (status) {
-                  return DropdownMenuItem<AttendanceStatus>(
-                    value: status,
-                    child: Text(
-                      _formatStatus(status),
-                    ),
-                  );
-                },
-              ).toList(),
-              onChanged: _onStatusChanged,
+              items: AttendanceStatus.values.map((status) {
+                return DropdownMenuItem<AttendanceStatus>(
+                  value: status,
+                  child: Text(_statusLabel(status)),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value == null) {
+                  return;
+                }
+
+                setState(() {
+                  _status = value;
+                });
+              },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
+
+            projectsAsync.when(
+              loading: () => const InputDecorator(
+                decoration: InputDecoration(
+                  labelText: 'Project',
+                  border: OutlineInputBorder(),
+                ),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Text('Loading projects...'),
+                  ],
+                ),
+              ),
+              error: (error, stackTrace) => InputDecorator(
+                decoration: const InputDecoration(
+                  labelText: 'Project',
+                  border: OutlineInputBorder(),
+                ),
+                child: Text(
+                  'Unable to load projects.',
+                  style: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .error,
+                  ),
+                ),
+              ),
+              data: (projects) {
+                return DropdownButtonFormField<String>(
+                  initialValue: projects.any(
+                    (project) => project.id == _projectId,
+                  )
+                      ? _projectId
+                      : null,
+                  isExpanded: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Project',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: projects.map((project) {
+                    return DropdownMenuItem<String>(
+                      value: project.id,
+                      child: Text(
+                        project.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: _onProjectChanged,
+                );
+              },
+            ),
+            const SizedBox(height: AppSpacing.md),
+
             TextFormField(
-              controller: _hoursController,
+              controller: _hoursWorkedController,
               keyboardType:
                   const TextInputType.numberWithOptions(
                 decimal: true,
@@ -241,9 +267,10 @@ class _WorkerAttendanceFormDialogState
                 return null;
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
+
             TextFormField(
-              controller: _overtimeController,
+              controller: _overtimeHoursController,
               keyboardType:
                   const TextInputType.numberWithOptions(
                 decimal: true,
@@ -253,40 +280,21 @@ class _WorkerAttendanceFormDialogState
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
-                final overtime = double.tryParse(
+                final hours = double.tryParse(
                   value?.trim() ?? '',
                 );
 
-                if (overtime == null ||
-                    overtime < 0 ||
-                    overtime > 24) {
+                if (hours == null ||
+                    hours < 0 ||
+                    hours > 24) {
                   return 'Enter overtime between 0 and 24';
                 }
 
                 return null;
               },
             ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<String>(
-              initialValue: _projectId,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'Project',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'project-001',
-                  child: Text('Residential Villa'),
-                ),
-                DropdownMenuItem(
-                  value: 'project-002',
-                  child: Text('Commercial Building'),
-                ),
-              ],
-              onChanged: _onProjectChanged,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
+
             TextFormField(
               controller: _notesController,
               maxLines: 3,
@@ -311,5 +319,18 @@ class _WorkerAttendanceFormDialogState
         ),
       ],
     );
+  }
+
+  String _statusLabel(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return 'Present';
+      case AttendanceStatus.halfDay:
+        return 'Half Day';
+      case AttendanceStatus.absent:
+        return 'Absent';
+      case AttendanceStatus.leave:
+        return 'Leave';
+    }
   }
 }

@@ -271,6 +271,7 @@ class _RequirementCard extends ConsumerWidget {
       builder: (_) =>
           MaterialRequirementProcurementFormDialog(
         materialRequirementId: requirement.id,
+        projectId: requirement.projectId,
       ),
     );
 
@@ -308,6 +309,7 @@ class _RequirementCard extends ConsumerWidget {
       builder: (_) =>
           MaterialRequirementProcurementFormDialog(
         materialRequirementId: requirement.id,
+        projectId: requirement.projectId,
         procurement: procurement,
       ),
     );

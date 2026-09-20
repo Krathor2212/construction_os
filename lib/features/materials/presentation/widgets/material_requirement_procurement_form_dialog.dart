@@ -1,28 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/material_requirement_procurement.dart';
+import '../../../procurement/presentation/providers/purchase_order_providers.dart';
 
 class MaterialRequirementProcurementFormDialog
-    extends StatefulWidget {
+    extends ConsumerStatefulWidget {
   const MaterialRequirementProcurementFormDialog({
     super.key,
     required this.materialRequirementId,
+    required this.projectId,
     this.procurement,
   });
 
   final String materialRequirementId;
+  final String projectId;
   final MaterialRequirementProcurement? procurement;
 
   @override
-  State<MaterialRequirementProcurementFormDialog> createState() =>
+  ConsumerState<MaterialRequirementProcurementFormDialog> createState() =>
       _MaterialRequirementProcurementFormDialogState();
 }
 
 class _MaterialRequirementProcurementFormDialogState
-    extends State<MaterialRequirementProcurementFormDialog> {
+    extends ConsumerState<MaterialRequirementProcurementFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController _purchaseOrderIdController;
+  String? _purchaseOrderId;
   late final TextEditingController _quantityController;
   late final TextEditingController _notesController;
 
@@ -34,9 +38,7 @@ class _MaterialRequirementProcurementFormDialogState
 
     final procurement = widget.procurement;
 
-    _purchaseOrderIdController = TextEditingController(
-      text: procurement?.purchaseOrderId ?? '',
-    );
+    _purchaseOrderId = procurement?.purchaseOrderId;
 
     _quantityController = TextEditingController(
       text: procurement?.quantity.toString() ?? '',
@@ -49,7 +51,6 @@ class _MaterialRequirementProcurementFormDialogState
 
   @override
   void dispose() {
-    _purchaseOrderIdController.dispose();
     _quantityController.dispose();
     _notesController.dispose();
     super.dispose();
@@ -68,12 +69,15 @@ class _MaterialRequirementProcurementFormDialogState
       return;
     }
 
+    if (_purchaseOrderId == null) {
+      return;
+    }
+
     final procurement = MaterialRequirementProcurement(
       id: widget.procurement?.id ??
           'requirement-procurement-${DateTime.now().microsecondsSinceEpoch}',
       materialRequirementId: widget.materialRequirementId,
-      purchaseOrderId:
-          _purchaseOrderIdController.text.trim(),
+      purchaseOrderId: _purchaseOrderId!,
       quantity: quantity,
       notes: _notesController.text.trim().isEmpty
           ? null
@@ -85,11 +89,13 @@ class _MaterialRequirementProcurementFormDialogState
 
   @override
   Widget build(BuildContext context) {
+    final purchaseOrdersAsync = ref.watch(
+      purchaseOrdersProvider(widget.projectId),
+    );
+
     return AlertDialog(
       title: Text(
-        _isEditing
-            ? 'Edit Procurement'
-            : 'Add Procurement',
+        _isEditing ? 'Edit Procurement' : 'Add Procurement',
       ),
       content: Form(
         key: _formKey,
@@ -97,34 +103,67 @@ class _MaterialRequirementProcurementFormDialogState
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
-                controller: _purchaseOrderIdController,
-                decoration: const InputDecoration(
-                  labelText: 'Purchase Order ID',
-                  hintText: 'e.g. purchase-order-001',
+              purchaseOrdersAsync.when(
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: CircularProgressIndicator(),
                 ),
-                validator: (value) {
-                  if (value == null ||
-                      value.trim().isEmpty) {
-                    return 'Enter a purchase order ID.';
+                error: (error, stackTrace) => Text(
+                  'Unable to load purchase orders.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+                data: (purchaseOrders) {
+                  if (purchaseOrders.isEmpty) {
+                    return const Text(
+                      'No purchase orders are available for this project.',
+                    );
                   }
 
-                  return null;
+                  return DropdownButtonFormField<String>(
+                    initialValue: _purchaseOrderId,
+                    decoration: const InputDecoration(
+                      labelText: 'Purchase Order',
+                    ),
+                    items: purchaseOrders.map((order) {
+                      return DropdownMenuItem<String>(
+                        value: order.id,
+                        child: Text(
+                          _purchaseOrderLabel(order),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _purchaseOrderId = value;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Select a purchase order.';
+                      }
+
+                      return null;
+                    },
+                  );
                 },
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _quantityController,
                 decoration: const InputDecoration(
                   labelText: 'Quantity',
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(
+                keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
                 validator: (value) {
-                  final quantity =
-                      double.tryParse(value?.trim() ?? '');
+                  final quantity = double.tryParse(
+                    value?.trim() ?? '',
+                  );
 
                   if (quantity == null) {
                     return 'Enter a valid quantity.';
@@ -137,7 +176,9 @@ class _MaterialRequirementProcurementFormDialogState
                   return null;
                 },
               ),
+
               const SizedBox(height: 16),
+
               TextFormField(
                 controller: _notesController,
                 decoration: const InputDecoration(
@@ -164,5 +205,9 @@ class _MaterialRequirementProcurementFormDialogState
         ),
       ],
     );
+  }
+
+  String _purchaseOrderLabel(dynamic order) {
+  return order.id;
   }
 }

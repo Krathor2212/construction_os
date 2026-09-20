@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/theme/app_spacing.dart';
@@ -24,27 +23,27 @@ class ProjectDetailsPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Project Details'),
-          actions: [
-            IconButton(
-              onPressed: () async {
-                final updated = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => ProjectFormDialog(
-                    project: projectAsync.value!,
-                  ),
-                );
+        title: const Text('Project Details'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              final updated = await showDialog<bool>(
+                context: context,
+                builder: (_) => ProjectFormDialog(
+                  project: projectAsync.value!,
+                ),
+              );
 
-                if (updated == true) {
-                  ref.invalidate(projectProvider(projectId));
-                  ref.invalidate(projectsProvider);
-                }
-              },
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit project',
-            ),
-          ],
-        ),
+              if (updated == true) {
+                ref.invalidate(projectProvider(projectId));
+                ref.invalidate(projectsProvider);
+              }
+            },
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit project',
+          ),
+        ],
+      ),
       body: projectAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(),
@@ -95,24 +94,20 @@ class _ProjectDetailsContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-
           _ProjectSummaryCard(project: project),
-
           const SizedBox(height: AppSpacing.xl),
-
           Text(
             'Project Management',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.sm),
-
           _ManagementOption(
             icon: Icons.timeline_outlined,
             title: 'Timeline',
             subtitle: 'Manage project phases and progress',
             onTap: () {
-            context.push('/projects/${project.id}/timeline');
-          },
+              context.push('/projects/${project.id}/timeline');
+            },
           ),
           _ManagementOption(
             icon: Icons.contacts_outlined,
@@ -151,29 +146,39 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.inventory_2_outlined,
+            title: 'Material Requirements',
+            subtitle: 'Plan materials required for this project',
+            onTap: () {
+              context.push(
+                '/projects/${project.id}/material-requirements',
+              );
+            },
+          ),
+          _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
             subtitle: 'Manage workers and labour assignments',
             onTap: () {
-            context.push('/workers');
-          },
+              context.push('/workers');
+            },
           ),
           _ManagementOption(
             icon: Icons.inventory_2_outlined,
             title: 'Materials',
-            subtitle: 'Track material requirements and quantities',
+            subtitle: 'Manage the material master catalog',
             onTap: () {
-            context.push('/materials');
-          },
+              context.push('/materials');
+            },
           ),
           _ManagementOption(
-          icon: Icons.local_shipping_outlined,
-          title: 'Suppliers',
-          subtitle: 'Manage suppliers and procurement',
-          onTap: () {
-            context.push('/suppliers');
-          },
-        ),
+            icon: Icons.local_shipping_outlined,
+            title: 'Suppliers',
+            subtitle: 'Manage suppliers and procurement',
+            onTap: () {
+              context.push('/suppliers');
+            },
+          ),
         ],
       ),
     );
@@ -310,7 +315,9 @@ class _ManagementOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      margin: const EdgeInsets.only(
+        bottom: AppSpacing.sm,
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),

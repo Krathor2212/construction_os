@@ -13,6 +13,7 @@ import '../features/procurement/presentation/pages/purchase_quotations_page.dart
 import '../features/procurement/presentation/pages/purchase_quotation_details_page.dart';
 import '../features/procurement/presentation/pages/purchase_orders_page.dart';
 import '../features/procurement/presentation/pages/purchase_order_details_page.dart';
+import '../features/materials/presentation/pages/material_requirements_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -124,6 +125,16 @@ final GoRouter appRouter = GoRouter(
         return PurchaseOrderDetailsPage(
           projectId: state.pathParameters['projectId']!,
           orderId: state.pathParameters['orderId']!,
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/projects/:projectId/material-requirements',
+      builder: (context, state) {
+        final projectId = state.pathParameters['projectId']!;
+        return MaterialRequirementsPage(
+          projectId: projectId,
         );
       },
     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../projects/presentation/providers/project_providers.dart';
 import '../../domain/entities/material.dart' as domain;
 import '../../domain/entities/material_requirement.dart';
 import '../providers/material_providers.dart';
@@ -25,10 +26,10 @@ class _MaterialRequirementFormDialogState
   final _formKey = GlobalKey<FormState>();
 
   String? _materialId;
+  String? _phaseId;
 
   late final TextEditingController _quantityController;
   late final TextEditingController _unitController;
-  late final TextEditingController _phaseController;
   late final TextEditingController _notesController;
 
   DateTime? _requiredByDate;
@@ -43,6 +44,7 @@ class _MaterialRequirementFormDialogState
     final requirement = widget.requirement;
 
     _materialId = requirement?.materialId;
+    _phaseId = requirement?.phaseId;
 
     _quantityController = TextEditingController(
       text: requirement == null ? '' : requirement.quantity.toString(),
@@ -50,10 +52,6 @@ class _MaterialRequirementFormDialogState
 
     _unitController = TextEditingController(
       text: requirement?.unit ?? '',
-    );
-
-    _phaseController = TextEditingController(
-      text: requirement?.phaseId ?? '',
     );
 
     _notesController = TextEditingController(
@@ -70,7 +68,6 @@ class _MaterialRequirementFormDialogState
   void dispose() {
     _quantityController.dispose();
     _unitController.dispose();
-    _phaseController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -119,14 +116,12 @@ class _MaterialRequirementFormDialogState
       return;
     }
 
-    final phaseValue = _phaseController.text.trim();
-
     final requirement = MaterialRequirement(
       id: widget.requirement?.id ??
           'material-requirement-'
               '${DateTime.now().microsecondsSinceEpoch}',
       projectId: widget.projectId,
-      phaseId: phaseValue.isEmpty ? null : phaseValue,
+      phaseId: _phaseId,
       materialId: _materialId!,
       quantity: quantity,
       unit: _unitController.text.trim(),
@@ -144,6 +139,9 @@ class _MaterialRequirementFormDialogState
   @override
   Widget build(BuildContext context) {
     final materialsAsync = ref.watch(materialsProvider);
+    final phasesAsync = ref.watch(
+      projectPhasesProvider(widget.projectId),
+    );
 
     return AlertDialog(
       title: Text(
@@ -212,6 +210,45 @@ class _MaterialRequirementFormDialogState
                   },
                 ),
                 const SizedBox(height: 16),
+                phasesAsync.when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: CircularProgressIndicator(),
+                  ),
+                  error: (error, stackTrace) => Text(
+                    'Unable to load project phases: $error',
+                  ),
+                  data: (phases) {
+                    final activePhases = phases
+                        .where((phase) => !phase.isArchived)
+                        .toList();
+
+                    return DropdownButtonFormField<String>(
+                      initialValue: _phaseId,
+                      decoration: const InputDecoration(
+                        labelText: 'Phase',
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('No Phase'),
+                        ),
+                        ...activePhases.map(
+                          (phase) => DropdownMenuItem<String>(
+                            value: phase.id,
+                            child: Text(phase.name),
+                          ),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _phaseId = value;
+                        });
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _quantityController,
                   keyboardType:
@@ -246,14 +283,6 @@ class _MaterialRequirementFormDialogState
 
                     return null;
                   },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _phaseController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phase ID',
-                    hintText: 'Example: phase-001',
-                  ),
                 ),
                 const SizedBox(height: 8),
                 ListTile(

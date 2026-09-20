@@ -75,6 +75,31 @@ class MockWorkerAttendanceRepository
   }
 
   @override
+  Future<List<WorkerAttendance>> getProjectAttendance({
+    required String projectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    return _attendance.where((attendance) {
+      if (attendance.projectId != projectId) {
+        return false;
+      }
+
+      if (startDate != null &&
+          attendance.date.isBefore(startDate)) {
+        return false;
+      }
+
+      if (endDate != null &&
+          attendance.date.isAfter(endDate)) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  @override
   Future<WorkerAttendance> getAttendanceRecord(
     String id,
   ) async {

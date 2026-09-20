@@ -6,6 +6,7 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/project.dart';
 import '../providers/project_providers.dart';
 import '../widgets/project_form_dialog.dart';
+import '../../../workforce/presentation/providers/labour_cost_summary_providers.dart';
 
 class ProjectDetailsPage extends ConsumerWidget {
   const ProjectDetailsPage({
@@ -94,13 +95,25 @@ class _ProjectDetailsContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          _ProjectSummaryCard(project: project),
+
+          _ProjectSummaryCard(
+            project: project,
+          ),
+
+          const SizedBox(height: AppSpacing.lg),
+
+          _DailyLabourSummaryCard(
+            projectId: project.id,
+          ),
+
           const SizedBox(height: AppSpacing.xl),
+
           Text(
             'Project Management',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.sm),
+
           _ManagementOption(
             icon: Icons.timeline_outlined,
             title: 'Timeline',
@@ -109,6 +122,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/timeline');
             },
           ),
+
           _ManagementOption(
             icon: Icons.contacts_outlined,
             title: 'Contacts',
@@ -117,6 +131,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/contacts');
             },
           ),
+
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Quotation',
@@ -125,6 +140,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/quotations');
             },
           ),
+
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Purchase Quotations',
@@ -135,6 +151,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
+
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Purchase Orders',
@@ -145,6 +162,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
+
           _ManagementOption(
             icon: Icons.inventory_2_outlined,
             title: 'Material Requirements',
@@ -155,6 +173,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
+
           _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
@@ -163,6 +182,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/workers');
             },
           ),
+
           _ManagementOption(
             icon: Icons.inventory_2_outlined,
             title: 'Materials',
@@ -171,6 +191,7 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/materials');
             },
           ),
+
           _ManagementOption(
             icon: Icons.local_shipping_outlined,
             title: 'Suppliers',
@@ -181,6 +202,219 @@ class _ProjectDetailsContent extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DailyLabourSummaryCard extends ConsumerWidget {
+  const _DailyLabourSummaryCard({
+    required this.projectId,
+  });
+
+  final String projectId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final today = DateTime.now();
+
+    final filter = LabourCostSummaryFilter(
+      projectId: projectId,
+      startDate: DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ),
+      endDate: DateTime(
+        today.year,
+        today.month,
+        today.day,
+      ),
+    );
+
+    final summaryAsync = ref.watch(
+      labourCostSummaryProvider(filter),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.groups_outlined),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    'Daily Labour Cost',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Text(
+                  _formatDate(today),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Divider(),
+            const SizedBox(height: AppSpacing.md),
+            summaryAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(AppSpacing.md),
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+              error: (error, stackTrace) => Text(
+                'Unable to load labour summary.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              data: (summary) {
+                return Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _LabourSummaryItem(
+                            label: 'Workers',
+                            value: '${summary.totalWorkers}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _LabourSummaryItem(
+                            label: 'Present',
+                            value: '${summary.presentWorkers}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _LabourSummaryItem(
+                            label: 'Half Day',
+                            value: '${summary.halfDayWorkers}',
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _LabourSummaryItem(
+                            label: 'Absent',
+                            value: '${summary.absentWorkers}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _LabourSummaryItem(
+                            label: 'Leave',
+                            value: '${summary.leaveWorkers}',
+                          ),
+                        ),
+                        const Expanded(
+                          child: SizedBox(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    const Divider(),
+                    const SizedBox(height: AppSpacing.md),
+                    _LabourCostRow(
+                      label: 'Base Labour',
+                      amount: summary.baseLabourCost,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    _LabourCostRow(
+                      label: 'Overtime',
+                      amount: summary.overtimeCost,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    const Divider(),
+                    const SizedBox(height: AppSpacing.sm),
+                    _LabourCostRow(
+                      label: 'Total Labour Cost',
+                      amount: summary.totalLabourCost,
+                      isTotal: true,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+}
+
+class _LabourSummaryItem extends StatelessWidget {
+  const _LabourSummaryItem({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium,
+        ),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+      ],
+    );
+  }
+}
+
+class _LabourCostRow extends StatelessWidget {
+  const _LabourCostRow({
+    required this.label,
+    required this.amount,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final double amount;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = isTotal
+        ? Theme.of(context).textTheme.titleMedium
+        : Theme.of(context).textTheme.bodyMedium;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: textStyle,
+          ),
+        ),
+        Text(
+          '₹${amount.toStringAsFixed(2)}',
+          style: isTotal
+              ? textStyle?.copyWith(
+                  fontWeight: FontWeight.w700,
+                )
+              : textStyle,
+        ),
+      ],
     );
   }
 }

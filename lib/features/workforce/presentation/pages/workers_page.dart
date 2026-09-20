@@ -5,9 +5,70 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_spacing.dart';
 import '../../domain/entities/worker.dart';
 import '../providers/worker_providers.dart';
+import '../widgets/worker_form_dialog.dart';
 
 class WorkersPage extends ConsumerWidget {
   const WorkersPage({super.key});
+
+  Future<void> _addWorker(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final worker = await showDialog<Worker>(
+      context: context,
+      builder: (_) => const WorkerFormDialog(),
+    );
+
+    if (worker == null) {
+      return;
+    }
+
+    final repository = ref.read(workerRepositoryProvider);
+
+    await repository.createWorker(worker);
+
+    ref.invalidate(workersProvider);
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Worker added successfully'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _editWorker(
+    BuildContext context,
+    WidgetRef ref,
+    Worker worker,
+  ) async {
+    final updatedWorker = await showDialog<Worker>(
+      context: context,
+      builder: (_) => WorkerFormDialog(
+        worker: worker,
+      ),
+    );
+
+    if (updatedWorker == null) {
+      return;
+    }
+
+    final repository = ref.read(workerRepositoryProvider);
+
+    await repository.updateWorker(updatedWorker);
+
+    ref.invalidate(workersProvider);
+    ref.invalidate(workerProvider(worker.id));
+
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Worker updated successfully'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,13 +99,22 @@ class WorkersPage extends ConsumerWidget {
             itemBuilder: (context, index) {
               return _WorkerCard(
                 worker: workers[index],
+                onEdit: () {
+                  _editWorker(
+                    context,
+                    ref,
+                    workers[index],
+                  );
+                },
               );
             },
           );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
+        onPressed: () {
+          _addWorker(context, ref);
+        },
         icon: const Icon(Icons.person_add_outlined),
         label: const Text('Add Worker'),
       ),
@@ -55,9 +125,11 @@ class WorkersPage extends ConsumerWidget {
 class _WorkerCard extends StatelessWidget {
   const _WorkerCard({
     required this.worker,
+    required this.onEdit,
   });
 
   final Worker worker;
+  final VoidCallback onEdit;
 
   void _openAttendance(BuildContext context) {
     context.push(
@@ -117,6 +189,24 @@ class _WorkerCard extends StatelessWidget {
                 _WorkerStatusChip(
                   isActive: worker.isActive,
                 ),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      onEdit();
+                    }
+                  },
+                  itemBuilder: (_) => const [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: ListTile(
+                        leading: Icon(
+                          Icons.edit_outlined,
+                        ),
+                        title: Text('Edit Worker'),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -132,6 +222,12 @@ class _WorkerCard extends StatelessWidget {
               text:
                   '₹${worker.dailyWage.toStringAsFixed(0)} / day',
             ),
+            const SizedBox(height: AppSpacing.xs),
+            _WorkerInfoRow(
+              icon: Icons.more_time_outlined,
+              text:
+                  '₹${worker.overtimeRate.toStringAsFixed(0)} / hour OT',
+            ),
             if (worker.notes != null) ...[
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -142,7 +238,6 @@ class _WorkerCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: AppSpacing.md),
-
             Row(
               children: [
                 Expanded(

@@ -7,6 +7,12 @@ abstract interface class WorkerAttendanceRepository {
     DateTime? endDate,
   });
 
+  Future<List<WorkerAttendance>> getProjectAttendance({
+    required String projectId,
+    DateTime? startDate,
+    DateTime? endDate,
+  });
+
   Future<WorkerAttendance> getAttendanceRecord(
     String id,
   );

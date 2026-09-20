@@ -5,6 +5,7 @@ class Worker {
     required this.role,
     required this.phone,
     this.dailyWage = 0,
+    this.overtimeRate = 0,
     this.isActive = true,
     this.notes,
   });
@@ -13,7 +14,13 @@ class Worker {
   final String name;
   final WorkerRole role;
   final String phone;
+
+  /// Normal wage for a full working day.
   final double dailyWage;
+
+  /// Overtime payment per hour for this particular worker.
+  final double overtimeRate;
+
   final bool isActive;
   final String? notes;
 }

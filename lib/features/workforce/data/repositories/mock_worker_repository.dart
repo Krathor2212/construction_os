@@ -9,6 +9,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.mason,
       phone: '+91 98765 10001',
       dailyWage: 900,
+      overtimeRate: 150,
       notes: 'Experienced in concrete and block work.',
     ),
     Worker(
@@ -17,6 +18,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.helper,
       phone: '+91 98765 10002',
       dailyWage: 650,
+      overtimeRate: 100,
     ),
     Worker(
       id: 'worker-003',
@@ -24,6 +26,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.carpenter,
       phone: '+91 98765 10003',
       dailyWage: 1000,
+      overtimeRate: 175,
     ),
     Worker(
       id: 'worker-004',
@@ -31,6 +34,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.electrician,
       phone: '+91 98765 10004',
       dailyWage: 1100,
+      overtimeRate: 200,
     ),
     Worker(
       id: 'worker-005',
@@ -38,6 +42,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.plumber,
       phone: '+91 98765 10005',
       dailyWage: 1050,
+      overtimeRate: 175,
     ),
     Worker(
       id: 'worker-006',
@@ -45,6 +50,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.supervisor,
       phone: '+91 98765 10006',
       dailyWage: 1500,
+      overtimeRate: 250,
       notes: 'Site supervisor.',
     ),
     Worker(
@@ -53,6 +59,7 @@ class MockWorkerRepository implements WorkerRepository {
       role: WorkerRole.painter,
       phone: '+91 98765 10007',
       dailyWage: 850,
+      overtimeRate: 140,
       isActive: false,
       notes: 'Currently unavailable.',
     ),

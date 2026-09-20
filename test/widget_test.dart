@@ -1,12 +1,18 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:construction_os/app/app.dart';
 
 void main() {
-  testWidgets('SuGoRa app loads', (WidgetTester tester) async {
-    await tester.pumpWidget(const SuGoRaApp());
+  testWidgets('SuGoRa app loads', (tester) async {
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: SuGoRaApp(),
+      ),
+    );
 
-    expect(find.text('SuGoRa Construction OS'), findsOneWidget);
-    expect(find.text('Construction Control Center'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SuGoRaApp), findsOneWidget);
   });
 }

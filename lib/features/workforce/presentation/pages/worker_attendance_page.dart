@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/worker_attendance.dart';
+import '../../domain/services/labour_cost_calculator.dart';
 import '../providers/worker_attendance_providers.dart';
+import '../providers/worker_providers.dart';
 import '../widgets/worker_attendance_form_dialog.dart';
 
 class WorkerAttendancePage extends ConsumerWidget {
@@ -19,11 +21,9 @@ class WorkerAttendancePage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final attendance =
-        await showDialog<WorkerAttendance>(
+    final attendance = await showDialog<WorkerAttendance>(
       context: context,
-      builder: (_) =>
-          WorkerAttendanceFormDialog(
+      builder: (_) => WorkerAttendanceFormDialog(
         workerId: workerId,
       ),
     );
@@ -36,9 +36,7 @@ class WorkerAttendancePage extends ConsumerWidget {
       workerAttendanceRepositoryProvider,
     );
 
-    await repository.createAttendance(
-      attendance,
-    );
+    await repository.createAttendance(attendance);
 
     ref.invalidate(
       workerAttendanceProvider(workerId),
@@ -58,11 +56,9 @@ class WorkerAttendancePage extends ConsumerWidget {
     WidgetRef ref,
     WorkerAttendance attendance,
   ) async {
-    final updatedAttendance =
-        await showDialog<WorkerAttendance>(
+    final updatedAttendance = await showDialog<WorkerAttendance>(
       context: context,
-      builder: (_) =>
-          WorkerAttendanceFormDialog(
+      builder: (_) => WorkerAttendanceFormDialog(
         workerId: workerId,
         attendance: attendance,
       ),
@@ -76,9 +72,7 @@ class WorkerAttendancePage extends ConsumerWidget {
       workerAttendanceRepositoryProvider,
     );
 
-    await repository.updateAttendance(
-      updatedAttendance,
-    );
+    await repository.updateAttendance(updatedAttendance);
 
     ref.invalidate(
       workerAttendanceProvider(workerId),
@@ -132,9 +126,7 @@ class WorkerAttendancePage extends ConsumerWidget {
       workerAttendanceRepositoryProvider,
     );
 
-    await repository.deleteAttendance(
-      attendance.id,
-    );
+    await repository.deleteAttendance(attendance.id);
 
     ref.invalidate(
       workerAttendanceProvider(workerId),
@@ -154,9 +146,15 @@ class WorkerAttendancePage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) {
+    final workerAsync = ref.watch(
+      workerProvider(workerId),
+    );
+
     final attendanceAsync = ref.watch(
       workerAttendanceProvider(workerId),
     );
+
+    const labourCostCalculator = LabourCostCalculator();
 
     return Scaffold(
       appBar: AppBar(
@@ -197,6 +195,39 @@ class WorkerAttendancePage extends ConsumerWidget {
             ],
           ),
           data: (attendance) {
+            if (workerAsync.isLoading) {
+              return ListView(
+                children: const [
+                  SizedBox(
+                    height: 300,
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ],
+              );
+            }
+
+            if (workerAsync.hasError) {
+              return ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    'Unable to load worker.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    workerAsync.error.toString(),
+                  ),
+                ],
+              );
+            }
+
+            final worker = workerAsync.requireValue;
+
             if (attendance.isEmpty) {
               return ListView(
                 padding: const EdgeInsets.all(16),
@@ -232,11 +263,10 @@ class WorkerAttendancePage extends ConsumerWidget {
               );
             }
 
-            final sortedAttendance =
-                [...attendance]
-                  ..sort(
-                    (a, b) => b.date.compareTo(a.date),
-                  );
+            final sortedAttendance = [...attendance]
+              ..sort(
+                (a, b) => b.date.compareTo(a.date),
+              );
 
             return ListView.separated(
               padding: const EdgeInsets.all(16),
@@ -244,11 +274,32 @@ class WorkerAttendancePage extends ConsumerWidget {
               separatorBuilder: (_, _) =>
                   const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final record =
-                    sortedAttendance[index];
+                final record = sortedAttendance[index];
+
+                final baseCost =
+                    labourCostCalculator.calculateBaseCost(
+                  worker: worker,
+                  attendance: record,
+                );
+
+                final overtimeCost =
+                    labourCostCalculator.calculateOvertimeCost(
+                  worker: worker,
+                  attendance: record,
+                );
+
+                final totalCost =
+                    labourCostCalculator.calculateTotalCost(
+                  worker: worker,
+                  attendance: record,
+                );
 
                 return _AttendanceCard(
                   attendance: record,
+                  baseCost: baseCost,
+                  overtimeCost: overtimeCost,
+                  totalCost: totalCost,
+                  overtimeRate: worker.overtimeRate,
                   onEdit: () => _editAttendance(
                     context,
                     ref,
@@ -280,11 +331,19 @@ class WorkerAttendancePage extends ConsumerWidget {
 class _AttendanceCard extends StatelessWidget {
   const _AttendanceCard({
     required this.attendance,
+    required this.baseCost,
+    required this.overtimeCost,
+    required this.totalCost,
+    required this.overtimeRate,
     required this.onEdit,
     required this.onDelete,
   });
 
   final WorkerAttendance attendance;
+  final double baseCost;
+  final double overtimeCost;
+  final double totalCost;
+  final double overtimeRate;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -294,12 +353,10 @@ class _AttendanceCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -339,10 +396,12 @@ class _AttendanceCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 Chip(
+                  avatar: const Icon(
+                    Icons.payment_outlined,
+                    size: 16,
+                  ),
                   label: Text(
-                    _formatStatus(
-                      attendance.status,
-                    ),
+                    _formatStatus(attendance.status),
                   ),
                 ),
                 Chip(
@@ -366,8 +425,31 @@ class _AttendanceCard extends StatelessWidget {
                   ),
               ],
             ),
+            const SizedBox(height: 12),
+            const Divider(),
+            const SizedBox(height: 12),
+            _CostRow(
+              label: 'Base labour',
+              amount: baseCost,
+            ),
+            const SizedBox(height: 6),
+            _CostRow(
+              label: attendance.overtimeHours > 0
+                  ? 'Overtime (${attendance.overtimeHours} hrs × '
+                    '₹${overtimeRate.toStringAsFixed(0)})'
+                  : 'Overtime',
+              amount: overtimeCost,
+            ),
+            const SizedBox(height: 8),
+            const Divider(),
+            const SizedBox(height: 8),
+            _CostRow(
+              label: 'Total labour cost',
+              amount: totalCost,
+              isTotal: true,
+            ),
             if (attendance.projectId != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               Text(
                 'Project: ${attendance.projectId}',
                 style: Theme.of(context)
@@ -419,5 +501,43 @@ class _AttendanceCard extends StatelessWidget {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
+  }
+}
+
+class _CostRow extends StatelessWidget {
+  const _CostRow({
+    required this.label,
+    required this.amount,
+    this.isTotal = false,
+  });
+
+  final String label;
+  final double amount;
+  final bool isTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = isTotal
+        ? Theme.of(context).textTheme.titleMedium
+        : Theme.of(context).textTheme.bodyMedium;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: textStyle,
+          ),
+        ),
+        Text(
+          '₹${amount.toStringAsFixed(2)}',
+          style: isTotal
+              ? textStyle?.copyWith(
+                  fontWeight: FontWeight.w700,
+                )
+              : textStyle,
+        ),
+      ],
+    );
   }
 }

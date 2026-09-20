@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/material_requirement.dart';
 import '../providers/material_providers.dart';
+import '../providers/material_requirement_procurement_providers.dart';
 import '../providers/material_requirement_providers.dart';
 import '../widgets/material_requirement_form_dialog.dart';
 
@@ -18,8 +19,7 @@ class MaterialRequirementsPage extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
-    final requirement =
-        await showDialog<MaterialRequirement>(
+    final requirement = await showDialog<MaterialRequirement>(
       context: context,
       builder: (_) => MaterialRequirementFormDialog(
         projectId: projectId,
@@ -132,7 +132,10 @@ class MaterialRequirementsPage extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final requirementsAsync =
         ref.watch(materialRequirementsProvider(projectId));
 
@@ -152,7 +155,7 @@ class MaterialRequirementsPage extends ConsumerWidget {
         },
         child: requirementsAsync.when(
           loading: () => ListView(
-            children: [
+            children: const [
               SizedBox(
                 height: 300,
                 child: Center(
@@ -166,7 +169,9 @@ class MaterialRequirementsPage extends ConsumerWidget {
             children: [
               Text(
                 'Unable to load material requirements.',
-                style: Theme.of(context).textTheme.titleMedium,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium,
               ),
               const SizedBox(height: 8),
               Text(error.toString()),
@@ -255,7 +260,10 @@ class _RequirementCard extends ConsumerWidget {
   final VoidCallback onArchive;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(
+    BuildContext context,
+    WidgetRef ref,
+  ) {
     final materialAsync =
         ref.watch(materialProvider(requirement.materialId));
 
@@ -263,6 +271,12 @@ class _RequirementCard extends ConsumerWidget {
       loading: () => 'Loading material...',
       error: (_, _) => requirement.materialId,
       data: (material) => material.name,
+    );
+
+    final summaryAsync = ref.watch(
+      materialRequirementProcurementSummaryProvider(
+        requirement.id,
+      ),
     );
 
     return Card(
@@ -306,14 +320,18 @@ class _RequirementCard extends ConsumerWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 8),
+
             Text(
               '${requirement.quantity} ${requirement.unit}',
               style: Theme.of(context)
                   .textTheme
                   .bodyLarge,
             ),
+
             const SizedBox(height: 8),
+
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -336,6 +354,7 @@ class _RequirementCard extends ConsumerWidget {
                   ),
               ],
             ),
+
             if (requirement.phaseId != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -345,6 +364,7 @@ class _RequirementCard extends ConsumerWidget {
                     .bodyMedium,
               ),
             ],
+
             if (requirement.notes != null &&
                 requirement.notes!.isNotEmpty) ...[
               const SizedBox(height: 8),
@@ -355,13 +375,89 @@ class _RequirementCard extends ConsumerWidget {
                     .bodyMedium,
               ),
             ],
+
+            const Divider(height: 24),
+
+            Text(
+              'Procurement',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall,
+            ),
+
+            const SizedBox(height: 8),
+
+            summaryAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: LinearProgressIndicator(),
+              ),
+              error: (_, _) => Text(
+                'Procurement data unavailable.',
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .error,
+                ),
+              ),
+              data: (summary) {
+                return Column(
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ProcurementValue(
+                            label: 'Required',
+                            value:
+                                '${summary.requiredQuantity} ${requirement.unit}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _ProcurementValue(
+                            label: 'Procured',
+                            value:
+                                '${summary.procuredQuantity} ${requirement.unit}',
+                          ),
+                        ),
+                        Expanded(
+                          child: _ProcurementValue(
+                            label: 'Remaining',
+                            value:
+                                '${summary.remainingQuantity} ${requirement.unit}',
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    LinearProgressIndicator(
+                      value: summary.procurementPercentage,
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(
+                      '${(summary.procurementPercentage * 100).toStringAsFixed(0)}% procured',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall,
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  String _formatStatus(MaterialRequirementStatus status) {
+  String _formatStatus(
+    MaterialRequirementStatus status,
+  ) {
     switch (status) {
       case MaterialRequirementStatus.planned:
         return 'Planned';
@@ -380,5 +476,40 @@ class _RequirementCard extends ConsumerWidget {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
         '${date.year}';
+  }
+}
+
+class _ProcurementValue extends StatelessWidget {
+  const _ProcurementValue({
+    required this.label,
+    required this.value,
+  });
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+        ),
+      ],
+    );
   }
 }

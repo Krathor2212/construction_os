@@ -6,6 +6,8 @@ import '../providers/material_providers.dart';
 import '../providers/material_requirement_procurement_providers.dart';
 import '../providers/material_requirement_providers.dart';
 import '../widgets/material_requirement_form_dialog.dart';
+import '../widgets/material_requirement_procurement_form_dialog.dart';
+import '../../domain/entities/material_requirement_procurement.dart';
 
 class MaterialRequirementsPage extends ConsumerWidget {
   const MaterialRequirementsPage({
@@ -259,6 +261,138 @@ class _RequirementCard extends ConsumerWidget {
   final VoidCallback onEdit;
   final VoidCallback onArchive;
 
+  Future<void> _addProcurement(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final procurement =
+        await showDialog<MaterialRequirementProcurement>(
+      context: context,
+      builder: (_) =>
+          MaterialRequirementProcurementFormDialog(
+        materialRequirementId: requirement.id,
+      ),
+    );
+
+    if (procurement == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      materialRequirementProcurementRepositoryProvider,
+    );
+
+    await repository.createProcurement(procurement);
+
+    ref.invalidate(
+      materialRequirementProcurementsProvider(
+        requirement.id,
+      ),
+    );
+
+    ref.invalidate(
+      materialRequirementProcurementSummaryProvider(
+        requirement.id,
+      ),
+    );
+  }
+
+  Future<void> _editProcurement(
+    BuildContext context,
+    WidgetRef ref,
+    MaterialRequirementProcurement procurement,
+  ) async {
+    final updatedProcurement =
+        await showDialog<MaterialRequirementProcurement>(
+      context: context,
+      builder: (_) =>
+          MaterialRequirementProcurementFormDialog(
+        materialRequirementId: requirement.id,
+        procurement: procurement,
+      ),
+    );
+
+    if (updatedProcurement == null) {
+      return;
+    }
+
+    final repository = ref.read(
+      materialRequirementProcurementRepositoryProvider,
+    );
+
+    await repository.updateProcurement(
+      updatedProcurement,
+    );
+
+    ref.invalidate(
+      materialRequirementProcurementsProvider(
+        requirement.id,
+      ),
+    );
+
+    ref.invalidate(
+      materialRequirementProcurementSummaryProvider(
+        requirement.id,
+      ),
+    );
+  }
+
+  Future<void> _deleteProcurement(
+    BuildContext context,
+    WidgetRef ref,
+    MaterialRequirementProcurement procurement,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Procurement'),
+          content: const Text(
+            'Are you sure you want to delete this procurement record?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    final repository = ref.read(
+      materialRequirementProcurementRepositoryProvider,
+    );
+
+    await repository.deleteProcurement(
+      procurement.id,
+    );
+
+    ref.invalidate(
+      materialRequirementProcurementsProvider(
+        requirement.id,
+      ),
+    );
+
+    ref.invalidate(
+      materialRequirementProcurementSummaryProvider(
+        requirement.id,
+      ),
+    );
+  }
+
   @override
   Widget build(
     BuildContext context,
@@ -279,6 +413,12 @@ class _RequirementCard extends ConsumerWidget {
       ),
     );
 
+    final procurementsAsync = ref.watch(
+      materialRequirementProcurementsProvider(
+        requirement.id,
+      ),
+    );
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -286,7 +426,8 @@ class _RequirementCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Text(
@@ -378,18 +519,33 @@ class _RequirementCard extends ConsumerWidget {
 
             const Divider(height: 24),
 
-            Text(
-              'Procurement',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Procurement',
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleSmall,
+                  ),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => _addProcurement(
+                    context,
+                    ref,
+                  ),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add'),
+                ),
+              ],
             ),
 
             const SizedBox(height: 8),
 
             summaryAsync.when(
               loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+                padding:
+                    EdgeInsets.symmetric(vertical: 8),
                 child: LinearProgressIndicator(),
               ),
               error: (_, _) => Text(
@@ -411,21 +567,24 @@ class _RequirementCard extends ConsumerWidget {
                           child: _ProcurementValue(
                             label: 'Required',
                             value:
-                                '${summary.requiredQuantity} ${requirement.unit}',
+                                '${summary.requiredQuantity} '
+                                '${requirement.unit}',
                           ),
                         ),
                         Expanded(
                           child: _ProcurementValue(
                             label: 'Procured',
                             value:
-                                '${summary.procuredQuantity} ${requirement.unit}',
+                                '${summary.procuredQuantity} '
+                                '${requirement.unit}',
                           ),
                         ),
                         Expanded(
                           child: _ProcurementValue(
                             label: 'Remaining',
                             value:
-                                '${summary.remainingQuantity} ${requirement.unit}',
+                                '${summary.remainingQuantity} '
+                                '${requirement.unit}',
                           ),
                         ),
                       ],
@@ -434,7 +593,8 @@ class _RequirementCard extends ConsumerWidget {
                     const SizedBox(height: 12),
 
                     LinearProgressIndicator(
-                      value: summary.procurementPercentage,
+                      value:
+                          summary.procurementPercentage,
                     ),
 
                     const SizedBox(height: 6),
@@ -446,6 +606,80 @@ class _RequirementCard extends ConsumerWidget {
                           .bodySmall,
                     ),
                   ],
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            procurementsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (procurements) {
+                if (procurements.isEmpty) {
+                  return Text(
+                    'No procurement records yet.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall,
+                  );
+                }
+
+                return Column(
+                  children: procurements.map(
+                    (procurement) {
+                      return ListTile(
+                        contentPadding:
+                            EdgeInsets.zero,
+                        leading: const Icon(
+                          Icons.local_shipping_outlined,
+                        ),
+                        title: Text(
+                          procurement.purchaseOrderId,
+                        ),
+                        subtitle: Text(
+                          '${procurement.quantity} '
+                          '${requirement.unit}'
+                          '${procurement.notes != null && procurement.notes!.isNotEmpty ? '\n${procurement.notes}' : ''}',
+                        ),
+                        isThreeLine:
+                            procurement.notes != null &&
+                                procurement.notes!.isNotEmpty,
+                        trailing:
+                            PopupMenuButton<String>(
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'edit':
+                                _editProcurement(
+                                  context,
+                                  ref,
+                                  procurement,
+                                );
+                                break;
+                              case 'delete':
+                                _deleteProcurement(
+                                  context,
+                                  ref,
+                                  procurement,
+                                );
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) =>
+                              const [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit'),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ).toList(),
                 );
               },
             ),
@@ -491,7 +725,8 @@ class _ProcurementValue extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Text(
           label,
@@ -513,3 +748,4 @@ class _ProcurementValue extends StatelessWidget {
     );
   }
 }
+  

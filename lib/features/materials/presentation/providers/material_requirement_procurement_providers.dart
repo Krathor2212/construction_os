@@ -27,17 +27,23 @@ final calculateMaterialRequirementProcurementProvider =
 });
 
 final materialRequirementProcurementSummaryProvider =
-    FutureProvider.family<MaterialRequirementProcurementSummary, String>(
+    FutureProvider.family<
+        MaterialRequirementProcurementSummary,
+        String>(
   (ref, materialRequirementId) async {
-    final requirement =
-        await ref.watch(materialRequirementProvider(materialRequirementId).future);
-
-    final procurements = await ref.watch(
-      materialRequirementProcurementsProvider(materialRequirementId).future,
+    final requirement = await ref.watch(
+      materialRequirementProvider(materialRequirementId).future,
     );
 
-    final calculator =
-        ref.watch(calculateMaterialRequirementProcurementProvider);
+    final procurements = await ref.watch(
+      materialRequirementProcurementsProvider(
+        materialRequirementId,
+      ).future,
+    );
+
+    final calculator = ref.watch(
+      calculateMaterialRequirementProcurementProvider,
+    );
 
     return calculator.execute(
       requirement: requirement,

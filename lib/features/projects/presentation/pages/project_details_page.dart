@@ -28,10 +28,16 @@ class ProjectDetailsPage extends ConsumerWidget {
         actions: [
           IconButton(
             onPressed: () async {
+              final project = projectAsync.value;
+
+              if (project == null) {
+                return;
+              }
+
               final updated = await showDialog<bool>(
                 context: context,
                 builder: (_) => ProjectFormDialog(
-                  project: projectAsync.value!,
+                  project: project,
                 ),
               );
 
@@ -95,25 +101,19 @@ class _ProjectDetailsContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-
           _ProjectSummaryCard(
             project: project,
           ),
-
           const SizedBox(height: AppSpacing.lg),
-
           _DailyLabourSummaryCard(
             projectId: project.id,
           ),
-
           const SizedBox(height: AppSpacing.xl),
-
           Text(
             'Project Management',
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: AppSpacing.sm),
-
           _ManagementOption(
             icon: Icons.timeline_outlined,
             title: 'Timeline',
@@ -122,7 +122,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/timeline');
             },
           ),
-
           _ManagementOption(
             icon: Icons.contacts_outlined,
             title: 'Contacts',
@@ -131,7 +130,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/contacts');
             },
           ),
-
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Quotation',
@@ -140,7 +138,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/projects/${project.id}/quotations');
             },
           ),
-
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Purchase Quotations',
@@ -151,7 +148,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
-
           _ManagementOption(
             icon: Icons.request_quote_outlined,
             title: 'Purchase Orders',
@@ -162,7 +158,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
-
           _ManagementOption(
             icon: Icons.inventory_2_outlined,
             title: 'Material Requirements',
@@ -173,7 +168,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               );
             },
           ),
-
           _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
@@ -182,7 +176,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/workers');
             },
           ),
-
           _ManagementOption(
             icon: Icons.inventory_2_outlined,
             title: 'Materials',
@@ -191,7 +184,6 @@ class _ProjectDetailsContent extends StatelessWidget {
               context.push('/materials');
             },
           ),
-
           _ManagementOption(
             icon: Icons.local_shipping_outlined,
             title: 'Suppliers',
@@ -206,7 +198,7 @@ class _ProjectDetailsContent extends StatelessWidget {
   }
 }
 
-class _DailyLabourSummaryCard extends ConsumerWidget {
+class _DailyLabourSummaryCard extends ConsumerStatefulWidget {
   const _DailyLabourSummaryCard({
     required this.projectId,
   });
@@ -214,21 +206,33 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
   final String projectId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_DailyLabourSummaryCard> createState() =>
+      _DailyLabourSummaryCardState();
+}
+
+class _DailyLabourSummaryCardState
+    extends ConsumerState<_DailyLabourSummaryCard> {
+  late DateTime _selectedDate;
+
+  @override
+  void initState() {
+    super.initState();
+
     final today = DateTime.now();
 
+    _selectedDate = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final filter = LabourCostSummaryFilter(
-      projectId: projectId,
-      startDate: DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ),
-      endDate: DateTime(
-        today.year,
-        today.month,
-        today.day,
-      ),
+      projectId: widget.projectId,
+      startDate: _selectedDate,
+      endDate: _selectedDate,
     );
 
     final summaryAsync = ref.watch(
@@ -243,17 +247,29 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.groups_outlined),
-                const SizedBox(width: AppSpacing.sm),
+                const Icon(
+                  Icons.groups_outlined,
+                ),
+                const SizedBox(
+                  width: AppSpacing.sm,
+                ),
                 Expanded(
                   child: Text(
                     'Daily Labour Cost',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium,
                   ),
                 ),
-                Text(
-                  _formatDate(today),
-                  style: Theme.of(context).textTheme.bodySmall,
+                OutlinedButton.icon(
+                  onPressed: () => _selectDate(context),
+                  icon: const Icon(
+                    Icons.calendar_today_outlined,
+                    size: 18,
+                  ),
+                  label: Text(
+                    _formatDate(_selectedDate),
+                  ),
                 ),
               ],
             ),
@@ -269,7 +285,9 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
               ),
               error: (error, stackTrace) => Text(
                 'Unable to load labour summary.',
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium,
               ),
               data: (summary) {
                 return Column(
@@ -296,7 +314,9 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
                     Row(
                       children: [
                         Expanded(
@@ -316,21 +336,31 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
                     const Divider(),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(
+                      height: AppSpacing.md,
+                    ),
                     _LabourCostRow(
                       label: 'Base Labour',
                       amount: summary.baseLabourCost,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(
+                      height: AppSpacing.sm,
+                    ),
                     _LabourCostRow(
                       label: 'Overtime',
                       amount: summary.overtimeCost,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(
+                      height: AppSpacing.sm,
+                    ),
                     const Divider(),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(
+                      height: AppSpacing.sm,
+                    ),
                     _LabourCostRow(
                       label: 'Total Labour Cost',
                       amount: summary.totalLabourCost,
@@ -344,6 +374,27 @@ class _DailyLabourSummaryCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final selectedDate = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (selectedDate == null) {
+      return;
+    }
+
+    setState(() {
+      _selectedDate = DateTime(
+        selectedDate.year,
+        selectedDate.month,
+        selectedDate.day,
+      );
+    });
   }
 
   String _formatDate(DateTime date) {
@@ -371,7 +422,9 @@ class _LabourSummaryItem extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelMedium,
         ),
-        const SizedBox(height: AppSpacing.xxs),
+        const SizedBox(
+          height: AppSpacing.xxs,
+        ),
         Text(
           value,
           style: Theme.of(context).textTheme.titleMedium,
@@ -449,9 +502,13 @@ class _ProjectSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
             const Divider(),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(
+              height: AppSpacing.md,
+            ),
             Row(
               children: [
                 Expanded(
@@ -465,7 +522,9 @@ class _ProjectSummaryCard extends StatelessWidget {
                     label: 'Expected End',
                     value: project.expectedEndDate == null
                         ? '-'
-                        : _formatDate(project.expectedEndDate!),
+                        : _formatDate(
+                            project.expectedEndDate!,
+                          ),
                   ),
                 ),
               ],
@@ -523,7 +582,9 @@ class _SummaryItem extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelMedium,
         ),
-        const SizedBox(height: AppSpacing.xxs),
+        const SizedBox(
+          height: AppSpacing.xxs,
+        ),
         Text(
           value,
           style: Theme.of(context).textTheme.bodyMedium,
@@ -562,26 +623,39 @@ class _ManagementOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context)
+                    .colorScheme
+                    .primary,
               ),
-              const SizedBox(width: AppSpacing.md),
+              const SizedBox(
+                width: AppSpacing.md,
+              ),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment:
+                      CrossAxisAlignment.start,
                   children: [
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyLarge,
                     ),
-                    const SizedBox(height: AppSpacing.xxs),
+                    const SizedBox(
+                      height: AppSpacing.xxs,
+                    ),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall,
                     ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right),
+              const Icon(
+                Icons.chevron_right,
+              ),
             ],
           ),
         ),

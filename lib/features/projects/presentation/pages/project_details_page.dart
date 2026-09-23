@@ -121,7 +121,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Timeline',
             subtitle: 'Manage project phases and progress',
             onTap: () {
-              context.push('/projects/${project.id}/timeline');
+              context.push(
+                '/projects/${project.id}/timeline',
+              );
             },
           ),
           _ManagementOption(
@@ -129,7 +131,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Contacts',
             subtitle: 'Client, engineers, architects and others',
             onTap: () {
-              context.push('/projects/${project.id}/contacts');
+              context.push(
+                '/projects/${project.id}/contacts',
+              );
             },
           ),
           _ManagementOption(
@@ -137,7 +141,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Quotation',
             subtitle: 'Manage quotation and commercial details',
             onTap: () {
-              context.push('/projects/${project.id}/quotations');
+              context.push(
+                '/projects/${project.id}/quotations',
+              );
             },
           ),
           _ManagementOption(
@@ -167,6 +173,16 @@ class _ProjectDetailsContent extends StatelessWidget {
             onTap: () {
               context.push(
                 '/projects/${project.id}/material-requirements',
+              );
+            },
+          ),
+          _ManagementOption(
+            icon: Icons.assignment_outlined,
+            title: 'Daily Site Reports',
+            subtitle: 'Record daily work, issues, safety and quality',
+            onTap: () {
+              context.push(
+                '/projects/${project.id}/daily-site-reports',
               );
             },
           ),

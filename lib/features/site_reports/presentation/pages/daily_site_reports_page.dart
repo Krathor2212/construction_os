@@ -118,6 +118,10 @@ class DailySiteReportsPage extends ConsumerWidget {
                         context,
                         ref,
                         report,
+                        phaseName: _phaseName(
+                          phases,
+                          report.phaseId,
+                        ),
                       ),
                       onEdit: () => _editReport(
                         context,
@@ -266,12 +270,14 @@ class DailySiteReportsPage extends ConsumerWidget {
   Future<void> _openReport(
     BuildContext context,
     WidgetRef ref,
-    DailySiteReport report,
-  ) async {
+    DailySiteReport report, {
+    required String phaseName,
+  }) async {
     await showDialog<void>(
       context: context,
       builder: (_) => _ReportDetailsDialog(
         report: report,
+        phaseName: phaseName,
       ),
     );
   }
@@ -303,30 +309,48 @@ class _SummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(18),
         child: Row(
           children: [
-            const CircleAvatar(
-              child: Icon(Icons.description_outlined),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.description_outlined,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Site Reports',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '$reportCount report${reportCount == 1 ? '' : 's'} recorded',
-                    style: Theme.of(context).textTheme.bodySmall,
+                    '$reportCount report'
+                    '${reportCount == 1 ? '' : 's'} recorded',
+                    style: theme.textTheme.bodySmall,
                   ),
                 ],
               ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: theme.colorScheme.outline,
             ),
           ],
         ),
@@ -352,6 +376,8 @@ class _ReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final formattedDate = MaterialLocalizations.of(
       context,
     ).formatMediumDate(report.date);
@@ -360,9 +386,9 @@ class _ReportCard extends StatelessWidget {
         report.issuesAndDelays.trim().isNotEmpty;
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -376,18 +402,46 @@ class _ReportCard extends StatelessWidget {
                       crossAxisAlignment:
                           CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          formattedDate,
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium,
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 17,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                formattedDate,
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          phaseName,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall,
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme
+                                .surfaceContainerHighest,
+                            borderRadius:
+                                BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            phaseName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall
+                                ?.copyWith(
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -418,39 +472,47 @@ class _ReportCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
+              Text(
+                'Work Completed',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
               Text(
                 report.workCompleted,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: theme.textTheme.bodyMedium,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.construction_outlined,
                     size: 18,
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Work completed',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall,
+                    'Work recorded',
+                    style: theme.textTheme.bodySmall,
                   ),
                   if (hasIssues) ...[
                     const SizedBox(width: 16),
-                    const Icon(
+                    Icon(
                       Icons.warning_amber_outlined,
                       size: 18,
+                      color: theme.colorScheme.error,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Issues reported',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ],
@@ -466,50 +528,119 @@ class _ReportCard extends StatelessWidget {
 class _ReportDetailsDialog extends StatelessWidget {
   const _ReportDetailsDialog({
     required this.report,
+    required this.phaseName,
   });
 
   final DailySiteReport report;
+  final String phaseName;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     final formattedDate = MaterialLocalizations.of(
       context,
     ).formatMediumDate(report.date);
 
+    final hasIssues =
+        report.issuesAndDelays.trim().isNotEmpty;
+
     return AlertDialog(
-      title: Text(
-        'Site Report • $formattedDate',
+      titlePadding: const EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        8,
+      ),
+      contentPadding: const EdgeInsets.fromLTRB(
+        24,
+        8,
+        24,
+        8,
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+        24,
+        8,
+        24,
+        20,
+      ),
+      title: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              Icons.description_outlined,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Daily Site Report',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  formattedDate,
+                  style: theme.textTheme.bodyMedium,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       content: SizedBox(
         width: 600,
         child: SingleChildScrollView(
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _ReportContextCard(
+                date: formattedDate,
+                phaseName: phaseName,
+              ),
+              const SizedBox(height: 18),
               _DetailSection(
+                icon: Icons.construction_outlined,
                 title: 'Work Completed',
                 content: report.workCompleted,
               ),
               _DetailSection(
+                icon: Icons.next_plan_outlined,
                 title: 'Work Planned for Next Day',
                 content: report.workPlannedForNextDay,
               ),
               _DetailSection(
+                icon: Icons.warning_amber_outlined,
                 title: 'Issues & Delays',
                 content: report.issuesAndDelays,
+                isHighlighted: hasIssues,
               ),
               _DetailSection(
+                icon: Icons.health_and_safety_outlined,
                 title: 'Safety Notes',
                 content: report.safetyNotes,
               ),
               _DetailSection(
+                icon: Icons.verified_outlined,
                 title: 'Quality Notes',
                 content: report.qualityNotes,
               ),
               if (report.generalNotes != null &&
                   report.generalNotes!.trim().isNotEmpty)
                 _DetailSection(
+                  icon: Icons.notes_outlined,
                   title: 'General Notes',
                   content: report.generalNotes!,
                 ),
@@ -529,39 +660,173 @@ class _ReportDetailsDialog extends StatelessWidget {
   }
 }
 
-class _DetailSection extends StatelessWidget {
-  const _DetailSection({
-    required this.title,
-    required this.content,
+class _ReportContextCard extends StatelessWidget {
+  const _ReportContextCard({
+    required this.date,
+    required this.phaseName,
   });
 
-  final String title;
-  final String content;
+  final String date;
+  final String phaseName;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Wrap(
+        spacing: 24,
+        runSpacing: 12,
         children: [
-          Text(
-            title,
-            style: Theme.of(context)
-                .textTheme
-                .titleSmall,
+          _ContextItem(
+            icon: Icons.calendar_today_outlined,
+            label: 'Report Date',
+            value: date,
           ),
-          const SizedBox(height: 6),
-          Text(
-            content.trim().isEmpty
-                ? 'No information recorded.'
-                : content,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium,
+          _ContextItem(
+            icon: Icons.account_tree_outlined,
+            label: 'Phase',
+            value: phaseName,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ContextItem extends StatelessWidget {
+  const _ContextItem({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: theme.colorScheme.primary,
+        ),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: theme.textTheme.labelSmall,
+            ),
+            const SizedBox(height: 2),
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 240,
+              ),
+              child: Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailSection extends StatelessWidget {
+  const _DetailSection({
+    required this.icon,
+    required this.title,
+    required this.content,
+    this.isHighlighted = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String content;
+  final bool isHighlighted;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final isEmpty = content.trim().isEmpty;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isHighlighted
+              ? theme.colorScheme.errorContainer
+              : theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isHighlighted
+                ? theme.colorScheme.error.withValues(alpha: 0.35)
+                : theme.colorScheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isHighlighted
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isHighlighted
+                          ? theme.colorScheme.onErrorContainer
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              isEmpty
+                  ? 'No information recorded.'
+                  : content,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: isEmpty
+                    ? theme.colorScheme.onSurfaceVariant
+                    : null,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -576,35 +841,40 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.description_outlined,
-              size: 64,
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary,
+            Container(
+              width: 88,
+              height: 88,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.description_outlined,
+                size: 44,
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               'No site reports yet',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleLarge,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               'Record daily site activities, progress, '
               'issues, safety, and quality observations.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium,
+              style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -635,8 +905,7 @@ class _ErrorState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
-          mainAxisAlignment:
-              MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(
               Icons.error_outline,

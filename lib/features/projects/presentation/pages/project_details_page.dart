@@ -187,6 +187,16 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.task_alt_outlined,
+            title: 'Tasks',
+            subtitle: 'Plan and track project work',
+            onTap: () {
+              context.push(
+                '/projects/${project.id}/tasks',
+              );
+            },
+          ),
+          _ManagementOption(
             icon: Icons.groups_outlined,
             title: 'Labour',
             subtitle: 'Manage workers and labour assignments',

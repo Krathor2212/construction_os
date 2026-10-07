@@ -486,3 +486,15 @@ Implemented in the current application:
 - Riverpod query, create, and update-status actions
 - Project defects screen with task context and status controls
 - Defect creation form and project navigation route
+
+### Completed Stage 2 slice: snag/punch lists
+
+Implemented in the current application:
+
+- Punch-list item entity with phase/task association and location
+- Priority levels: low, medium, high, and critical
+- Item statuses: open, in progress, and completed
+- Mock punch-list repository with newest-first ordering
+- Riverpod query, create, and status-update actions
+- Project snag/punch-list screen and creation form
+- Inline status updates and task context display

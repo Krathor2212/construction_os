@@ -165,6 +165,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.checklist_outlined,
+            title: 'Snag / Punch List',
+            subtitle: 'Track finishing items and completion status',
+            onTap: () {
+              context.push('/projects/${project.id}/punch-list');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.task_alt_outlined,
             title: 'Tasks',
             subtitle: 'Plan and track project work',

@@ -21,6 +21,7 @@ import '../features/tasks/presentation/pages/project_tasks_page.dart';
 import '../features/tasks/presentation/pages/project_task_details_page.dart';
 import '../features/quality/presentation/pages/project_inspections_page.dart';
 import '../features/quality/presentation/pages/project_defects_page.dart';
+import '../features/quality/presentation/pages/project_punch_list_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -74,6 +75,12 @@ final GoRouter appRouter = GoRouter(
       path: '/projects/:projectId/defects',
       builder: (context, state) =>
           ProjectDefectsPage(projectId: state.pathParameters['projectId']!),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/punch-list',
+      builder: (context, state) => ProjectPunchListPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
     ),
     GoRoute(path: '/workers', builder: (context, state) => const WorkersPage()),
     GoRoute(

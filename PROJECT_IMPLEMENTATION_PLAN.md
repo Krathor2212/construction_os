@@ -420,3 +420,17 @@ Implemented in the current application:
 - Mock attendance aligned with the sample excavation task window
 
 The next Stage 1 slice is task progress history.
+
+### Completed Stage 1 slice: task progress history
+
+Implemented in the current application:
+
+- Task progress update entity and repository abstraction
+- In-memory progress history repository with sample task history
+- Riverpod history query and mutation providers
+- Progress history timeline on task details
+- Automatic history record creation after each successful execution update
+- Newest-first history ordering with timestamp, status, progress, and notes
+- Repository tests for ordering and persistence
+
+The next Stage 1 slice is connecting tasks with daily site reports.

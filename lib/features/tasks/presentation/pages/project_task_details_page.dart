@@ -6,7 +6,9 @@ import '../../../projects/presentation/providers/project_providers.dart';
 import '../../../workforce/domain/entities/worker.dart';
 import '../../../workforce/presentation/providers/worker_providers.dart';
 import '../../domain/entities/project_task.dart';
+import '../../domain/entities/project_task_progress_update.dart';
 import '../providers/project_task_providers.dart';
+import '../providers/project_task_progress_providers.dart';
 import '../providers/task_labour_providers.dart';
 import '../widgets/project_task_form_dialog.dart';
 
@@ -166,6 +168,8 @@ class _TaskDetailsContent extends ConsumerWidget {
             _TaskWorkersSection(task: task),
             const SizedBox(height: AppSpacing.md),
             _TaskLabourSection(task: task),
+            const SizedBox(height: AppSpacing.md),
+            _TaskProgressHistorySection(task: task),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(
               onPressed: () => _updateExecution(context, ref, task),
@@ -449,6 +453,60 @@ class _TaskLabourSection extends ConsumerWidget {
   }
 }
 
+class _TaskProgressHistorySection extends ConsumerWidget {
+  const _TaskProgressHistorySection({required this.task});
+
+  final ProjectTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final updatesAsync = ref.watch(projectTaskProgressProvider(task.id));
+
+    return _TaskSection(
+      title: 'Progress history',
+      icon: Icons.timeline_outlined,
+      child: updatesAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text(
+          'Unable to load progress history: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+        data: (updates) {
+          if (updates.isEmpty) {
+            return const Text('No progress updates recorded yet.');
+          }
+
+          return Column(
+            children: updates
+                .map(
+                  (update) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      child: Text(
+                        update.progress.toStringAsFixed(0),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    title: Text(
+                      '${update.progress.toStringAsFixed(0)}% - '
+                      '${_statusLabel(update.status)}',
+                    ),
+                    subtitle: Text(
+                      [
+                        _formatDateTime(update.recordedAt),
+                        if (update.notes != null) update.notes!,
+                      ].join(' · '),
+                    ),
+                  ),
+                )
+                .toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
 Future<void> _updateExecution(
   BuildContext context,
   WidgetRef ref,
@@ -464,6 +522,16 @@ Future<void> _updateExecution(
   }
 
   await ref.read(projectTaskActionsProvider).updateTask(updatedTask);
+  await ref.read(projectTaskProgressActionsProvider).createUpdate(
+        ProjectTaskProgressUpdate(
+          id: 'task-progress-${DateTime.now().microsecondsSinceEpoch}',
+          taskId: updatedTask.id,
+          progress: updatedTask.progress,
+          status: updatedTask.status,
+          recordedAt: DateTime.now(),
+          notes: updatedTask.notes,
+        ),
+      );
 
   if (!context.mounted) {
     return;
@@ -869,6 +937,11 @@ class _TaskDetailsError extends StatelessWidget {
 String _formatDate(DateTime date) {
   return '${date.day.toString().padLeft(2, '0')}/'
       '${date.month.toString().padLeft(2, '0')}/${date.year}';
+}
+
+String _formatDateTime(DateTime date) {
+  return '${_formatDate(date)} ${date.hour.toString().padLeft(2, '0')}:'
+      '${date.minute.toString().padLeft(2, '0')}';
 }
 
 String _statusLabel(ProjectTaskStatus status) {

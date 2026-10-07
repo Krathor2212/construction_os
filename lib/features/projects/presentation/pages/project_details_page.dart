@@ -181,6 +181,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.fact_check_outlined,
+            title: 'Reinspection',
+            subtitle: 'Verify corrective work and record follow-up results',
+            onTap: () {
+              context.push('/projects/${project.id}/reinspections');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.task_alt_outlined,
             title: 'Tasks',
             subtitle: 'Plan and track project work',

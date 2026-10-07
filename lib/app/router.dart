@@ -23,6 +23,7 @@ import '../features/quality/presentation/pages/project_inspections_page.dart';
 import '../features/quality/presentation/pages/project_defects_page.dart';
 import '../features/quality/presentation/pages/project_punch_list_page.dart';
 import '../features/quality/presentation/pages/project_corrective_actions_page.dart';
+import '../features/quality/presentation/pages/project_reinspections_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -86,6 +87,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/projects/:projectId/corrective-actions',
       builder: (context, state) => ProjectCorrectiveActionsPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/reinspections',
+      builder: (context, state) => ProjectReinspectionsPage(
         projectId: state.pathParameters['projectId']!,
       ),
     ),

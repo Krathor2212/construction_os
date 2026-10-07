@@ -65,7 +65,7 @@ profitability.
 | Workforce and labour costing | Strong foundation |
 | Daily site operations | Foundation |
 | Tasks and execution | Core execution slices implemented |
-| Quality management | Inspections, defects, punch lists, and corrective actions implemented |
+| Quality management | Inspections, defects, punch lists, corrective actions, and reinspections implemented |
 | Finance | Pending |
 | Logistics and inventory | Pending |
 | Planning, BOQ, and design | Pending |
@@ -76,7 +76,7 @@ profitability.
 ### Validation baseline
 
 - Flutter static analysis: passing
-- Automated test suite: **36 tests passing**
+- Automated test suite: **38 tests passing**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
 - Backend API: not yet integrated
@@ -309,7 +309,7 @@ infrastructure while the current feature stages are incomplete.
 - [x] Defects
 - [x] Snag/punch lists
 - [x] Corrective actions
-- [ ] Reinspection
+- [x] Reinspection
 - [ ] Quality history
 
 ### Stage 3 - Materials and logistics
@@ -486,6 +486,17 @@ infrastructure while the current feature stages are incomplete.
 - Due-date and overdue display
 - Inline status controls and project route
 
+### Stage 2: Reinspection
+
+- Reinspection entity linked to the originating corrective action
+- Original inspection result, follow-up result, inspector, date, and notes
+- Optional phase and task context
+- Reinspection repository with newest-first ordering
+- Riverpod query and create-action providers
+- Project reinspection screen and creation form
+- Corrective-action selection when recording a follow-up inspection
+- Project navigation entry and route
+
 ---
 
 ## 8. Quality and engineering rules
@@ -548,12 +559,12 @@ Project foundation
   -> Daily site report foundation
   -> Task execution foundation
   -> Quality management foundation
-  -> NEXT: Reinspection
+  -> NEXT: Quality history
 ```
 
-The next planned feature is **reinspection**. It should build on inspections,
-defects, punch lists, and corrective actions by recording whether a corrective
-action or quality issue passes a follow-up check.
+The next planned feature is **quality history**. It should provide a
+project-level chronological view across inspections, defects, punch lists,
+corrective actions, and reinspections.
 
 Before implementing reinspection, preserve the current decisions:
 

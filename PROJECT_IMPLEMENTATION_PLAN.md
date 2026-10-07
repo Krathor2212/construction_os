@@ -447,4 +447,29 @@ Implemented in the current application:
 - Mock reports include links to the sample excavation task
 - Repository coverage verifies linked report data
 
-The next Stage 1 slice is planned versus actual execution.
+### Completed Stage 1 slice: planned versus actual execution
+
+Implemented in the current application:
+
+- Dedicated planned-versus-actual execution section on task details
+- Planned date range and inclusive planned duration
+- Actual date range and inclusive actual duration when execution is complete
+- Schedule variance labels for on-schedule, early, and late completion
+- Overdue detection for incomplete tasks past their planned end date
+- Color-coded variance presentation for quick schedule-risk recognition
+- Domain calculator and focused tests for duration and variance rules
+
+Stage 1 execution foundations are now complete. The next implementation work
+should move to Stage 2 quality management, starting with inspections.
+
+### Completed Stage 2 slice: inspections
+
+Implemented in the current application:
+
+- Project inspection entity with phase/task association
+- Inspection result states: passed, failed, and requires attention
+- Mock inspection repository with newest-first ordering
+- Riverpod query and create-action providers
+- Project inspections screen with task context and notes
+- Inspection creation form with inspector, phase, task, result, and notes
+- Project navigation entry and route for inspections

@@ -11,18 +11,13 @@ import '../../../workforce/presentation/providers/labour_phase_cost_summary_prov
 import '../../../workforce/domain/entities/labour_phase_cost_summary.dart';
 
 class ProjectDetailsPage extends ConsumerWidget {
-  const ProjectDetailsPage({
-    required this.projectId,
-    super.key,
-  });
+  const ProjectDetailsPage({required this.projectId, super.key});
 
   final String projectId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectAsync = ref.watch(
-      projectProvider(projectId),
-    );
+    final projectAsync = ref.watch(projectProvider(projectId));
 
     return Scaffold(
       appBar: AppBar(
@@ -38,9 +33,7 @@ class ProjectDetailsPage extends ConsumerWidget {
 
               final updated = await showDialog<bool>(
                 context: context,
-                builder: (_) => ProjectFormDialog(
-                  project: project,
-                ),
+                builder: (_) => ProjectFormDialog(project: project),
               );
 
               if (updated == true) {
@@ -54,24 +47,17 @@ class ProjectDetailsPage extends ConsumerWidget {
         ],
       ),
       body: projectAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (error, stackTrace) => const Center(
-          child: Text('Project not found'),
-        ),
-        data: (project) => _ProjectDetailsContent(
-          project: project,
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) =>
+            const Center(child: Text('Project not found')),
+        data: (project) => _ProjectDetailsContent(project: project),
       ),
     );
   }
 }
 
 class _ProjectDetailsContent extends StatelessWidget {
-  const _ProjectDetailsContent({
-    required this.project,
-  });
+  const _ProjectDetailsContent({required this.project});
 
   final Project project;
 
@@ -82,17 +68,11 @@ class _ProjectDetailsContent extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            project.name,
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
+          Text(project.name, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: AppSpacing.xs),
           Row(
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 18,
-              ),
+              const Icon(Icons.location_on_outlined, size: 18),
               const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Text(
@@ -103,13 +83,9 @@ class _ProjectDetailsContent extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          _ProjectSummaryCard(
-            project: project,
-          ),
+          _ProjectSummaryCard(project: project),
           const SizedBox(height: AppSpacing.lg),
-          _LabourSummarySection(
-            projectId: project.id,
-          ),
+          _LabourSummarySection(projectId: project.id),
           const SizedBox(height: AppSpacing.xl),
           Text(
             'Project Management',
@@ -121,9 +97,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Timeline',
             subtitle: 'Manage project phases and progress',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/timeline',
-              );
+              context.push('/projects/${project.id}/timeline');
             },
           ),
           _ManagementOption(
@@ -131,9 +105,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Contacts',
             subtitle: 'Client, engineers, architects and others',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/contacts',
-              );
+              context.push('/projects/${project.id}/contacts');
             },
           ),
           _ManagementOption(
@@ -141,9 +113,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Quotation',
             subtitle: 'Manage quotation and commercial details',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/quotations',
-              );
+              context.push('/projects/${project.id}/quotations');
             },
           ),
           _ManagementOption(
@@ -151,9 +121,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Purchase Quotations',
             subtitle: 'Supplier quotations and material pricing',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/purchase-quotations',
-              );
+              context.push('/projects/${project.id}/purchase-quotations');
             },
           ),
           _ManagementOption(
@@ -161,9 +129,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Purchase Orders',
             subtitle: 'Manage purchase orders and supplier deliveries',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/purchase-orders',
-              );
+              context.push('/projects/${project.id}/purchase-orders');
             },
           ),
           _ManagementOption(
@@ -171,9 +137,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Material Requirements',
             subtitle: 'Plan materials required for this project',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/material-requirements',
-              );
+              context.push('/projects/${project.id}/material-requirements');
             },
           ),
           _ManagementOption(
@@ -181,9 +145,15 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Daily Site Reports',
             subtitle: 'Record daily work, issues, safety and quality',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/daily-site-reports',
-              );
+              context.push('/projects/${project.id}/daily-site-reports');
+            },
+          ),
+          _ManagementOption(
+            icon: Icons.fact_check_outlined,
+            title: 'Inspections',
+            subtitle: 'Record task and phase quality checks',
+            onTap: () {
+              context.push('/projects/${project.id}/inspections');
             },
           ),
           _ManagementOption(
@@ -191,9 +161,7 @@ class _ProjectDetailsContent extends StatelessWidget {
             title: 'Tasks',
             subtitle: 'Plan and track project work',
             onTap: () {
-              context.push(
-                '/projects/${project.id}/tasks',
-              );
+              context.push('/projects/${project.id}/tasks');
             },
           ),
           _ManagementOption(
@@ -227,9 +195,7 @@ class _ProjectDetailsContent extends StatelessWidget {
 }
 
 class _LabourSummarySection extends ConsumerStatefulWidget {
-  const _LabourSummarySection({
-    required this.projectId,
-  });
+  const _LabourSummarySection({required this.projectId});
 
   final String projectId;
 
@@ -238,8 +204,7 @@ class _LabourSummarySection extends ConsumerStatefulWidget {
       _LabourSummarySectionState();
 }
 
-class _LabourSummarySectionState
-    extends ConsumerState<_LabourSummarySection> {
+class _LabourSummarySectionState extends ConsumerState<_LabourSummarySection> {
   late DateTime _selectedDate;
 
   @override
@@ -248,11 +213,7 @@ class _LabourSummarySectionState
 
     final today = DateTime.now();
 
-    _selectedDate = DateTime(
-      today.year,
-      today.month,
-      today.day,
-    );
+    _selectedDate = DateTime(today.year, today.month, today.day);
   }
 
   @override
@@ -269,9 +230,7 @@ class _LabourSummarySectionState
       endDate: _selectedDate,
     );
 
-    final summaryAsync = ref.watch(
-      labourCostSummaryProvider(filter),
-    );
+    final summaryAsync = ref.watch(labourCostSummaryProvider(filter));
 
     final phaseSummaryAsync = ref.watch(
       labourPhaseCostSummaryProvider(phaseFilter),
@@ -286,9 +245,7 @@ class _LabourSummarySectionState
           onSelectDate: () => _selectDate(context),
         ),
         const SizedBox(height: AppSpacing.md),
-        _LabourCostByPhaseCard(
-          summaryAsync: phaseSummaryAsync,
-        ),
+        _LabourCostByPhaseCard(summaryAsync: phaseSummaryAsync),
       ],
     );
   }
@@ -336,29 +293,18 @@ class _DailyLabourSummaryCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.groups_outlined,
-                ),
-                const SizedBox(
-                  width: AppSpacing.sm,
-                ),
+                const Icon(Icons.groups_outlined),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Daily Labour Cost',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
                 OutlinedButton.icon(
                   onPressed: onSelectDate,
-                  icon: const Icon(
-                    Icons.calendar_today_outlined,
-                    size: 18,
-                  ),
-                  label: Text(
-                    _formatDate(selectedDate),
-                  ),
+                  icon: const Icon(Icons.calendar_today_outlined, size: 18),
+                  label: Text(_formatDate(selectedDate)),
                 ),
               ],
             ),
@@ -368,15 +314,11 @@ class _DailyLabourSummaryCard extends StatelessWidget {
             summaryAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(AppSpacing.md),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, stackTrace) => Text(
                 'Unable to load labour summary.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               data: (summary) {
                 return Column(
@@ -403,9 +345,7 @@ class _DailyLabourSummaryCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(
-                      height: AppSpacing.md,
-                    ),
+                    const SizedBox(height: AppSpacing.md),
                     Row(
                       children: [
                         Expanded(
@@ -420,36 +360,24 @@ class _DailyLabourSummaryCard extends StatelessWidget {
                             value: '${summary.leaveWorkers}',
                           ),
                         ),
-                        const Expanded(
-                          child: SizedBox(),
-                        ),
+                        const Expanded(child: SizedBox()),
                       ],
                     ),
-                    const SizedBox(
-                      height: AppSpacing.md,
-                    ),
+                    const SizedBox(height: AppSpacing.md),
                     const Divider(),
-                    const SizedBox(
-                      height: AppSpacing.md,
-                    ),
+                    const SizedBox(height: AppSpacing.md),
                     _LabourCostRow(
                       label: 'Base Labour',
                       amount: summary.baseLabourCost,
                     ),
-                    const SizedBox(
-                      height: AppSpacing.sm,
-                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     _LabourCostRow(
                       label: 'Overtime',
                       amount: summary.overtimeCost,
                     ),
-                    const SizedBox(
-                      height: AppSpacing.sm,
-                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     const Divider(),
-                    const SizedBox(
-                      height: AppSpacing.sm,
-                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     _LabourCostRow(
                       label: 'Total Labour Cost',
                       amount: summary.totalLabourCost,
@@ -473,9 +401,7 @@ class _DailyLabourSummaryCard extends StatelessWidget {
 }
 
 class _LabourCostByPhaseCard extends StatelessWidget {
-  const _LabourCostByPhaseCard({
-    required this.summaryAsync,
-  });
+  const _LabourCostByPhaseCard({required this.summaryAsync});
 
   final AsyncValue summaryAsync;
 
@@ -489,60 +415,40 @@ class _LabourCostByPhaseCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.account_tree_outlined,
-                ),
-                const SizedBox(
-                  width: AppSpacing.sm,
-                ),
+                const Icon(Icons.account_tree_outlined),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Labour Cost by Phase',
-                    style: Theme.of(context)
-                        .textTheme
-                        .titleMedium,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
               ],
             ),
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
+            const SizedBox(height: AppSpacing.md),
             const Divider(),
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
+            const SizedBox(height: AppSpacing.md),
             summaryAsync.when(
               loading: () => const Padding(
                 padding: EdgeInsets.all(AppSpacing.md),
-                child: Center(
-                  child: CircularProgressIndicator(),
-                ),
+                child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, stackTrace) => Text(
                 'Unable to load phase labour summary.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
               data: (summaries) {
                 if (summaries.isEmpty) {
                   return Text(
                     'No phase-wise labour records for this date.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   );
                 }
 
                 return Column(
                   children: [
-                    for (var index = 0;
-                        index < summaries.length;
-                        index++) ...[
-                      _LabourPhaseSummaryItem(
-                        summary: summaries[index],
-                      ),
+                    for (var index = 0; index < summaries.length; index++) ...[
+                      _LabourPhaseSummaryItem(summary: summaries[index]),
                       if (index < summaries.length - 1)
                         const Padding(
                           padding: EdgeInsets.symmetric(
@@ -563,9 +469,7 @@ class _LabourCostByPhaseCard extends StatelessWidget {
 }
 
 class _LabourPhaseSummaryItem extends StatelessWidget {
-  const _LabourPhaseSummaryItem({
-    required this.summary,
-  });
+  const _LabourPhaseSummaryItem({required this.summary});
 
   final LabourPhaseCostSummary summary;
 
@@ -579,25 +483,17 @@ class _LabourPhaseSummaryItem extends StatelessWidget {
             Expanded(
               child: Text(
                 summary.phaseName,
-                style: Theme.of(context)
-                    .textTheme
-                    .titleSmall,
+                style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
             Text(
               '₹${summary.totalLabourCost.toStringAsFixed(2)}',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleSmall
-                  ?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
-        const SizedBox(
-          height: AppSpacing.sm,
-        ),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           children: [
             Expanded(
@@ -620,30 +516,17 @@ class _LabourPhaseSummaryItem extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(
-          height: AppSpacing.sm,
-        ),
-        _LabourCostRow(
-          label: 'Base Labour',
-          amount: summary.baseLabourCost,
-        ),
-        const SizedBox(
-          height: AppSpacing.xs,
-        ),
-        _LabourCostRow(
-          label: 'Overtime',
-          amount: summary.overtimeCost,
-        ),
+        const SizedBox(height: AppSpacing.sm),
+        _LabourCostRow(label: 'Base Labour', amount: summary.baseLabourCost),
+        const SizedBox(height: AppSpacing.xs),
+        _LabourCostRow(label: 'Overtime', amount: summary.overtimeCost),
       ],
     );
   }
 }
 
 class _LabourSummaryItem extends StatelessWidget {
-  const _LabourSummaryItem({
-    required this.label,
-    required this.value,
-  });
+  const _LabourSummaryItem({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -653,17 +536,9 @@ class _LabourSummaryItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
-        const SizedBox(
-          height: AppSpacing.xxs,
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(value, style: Theme.of(context).textTheme.titleMedium),
       ],
     );
   }
@@ -688,18 +563,11 @@ class _LabourCostRow extends StatelessWidget {
 
     return Row(
       children: [
-        Expanded(
-          child: Text(
-            label,
-            style: textStyle,
-          ),
-        ),
+        Expanded(child: Text(label, style: textStyle)),
         Text(
           '₹${amount.toStringAsFixed(2)}',
           style: isTotal
-              ? textStyle?.copyWith(
-                  fontWeight: FontWeight.w700,
-                )
+              ? textStyle?.copyWith(fontWeight: FontWeight.w700)
               : textStyle,
         ),
       ],
@@ -708,9 +576,7 @@ class _LabourCostRow extends StatelessWidget {
 }
 
 class _ProjectSummaryCard extends StatelessWidget {
-  const _ProjectSummaryCard({
-    required this.project,
-  });
+  const _ProjectSummaryCard({required this.project});
 
   final Project project;
 
@@ -737,13 +603,9 @@ class _ProjectSummaryCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
+            const SizedBox(height: AppSpacing.md),
             const Divider(),
-            const SizedBox(
-              height: AppSpacing.md,
-            ),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
@@ -757,9 +619,7 @@ class _ProjectSummaryCard extends StatelessWidget {
                     label: 'Expected End',
                     value: project.expectedEndDate == null
                         ? '-'
-                        : _formatDate(
-                            project.expectedEndDate!,
-                          ),
+                        : _formatDate(project.expectedEndDate!),
                   ),
                 ),
               ],
@@ -800,10 +660,7 @@ class _ProjectSummaryCard extends StatelessWidget {
 }
 
 class _SummaryItem extends StatelessWidget {
-  const _SummaryItem({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryItem({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -813,17 +670,9 @@ class _SummaryItem extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelMedium,
-        ),
-        const SizedBox(
-          height: AppSpacing.xxs,
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        const SizedBox(height: AppSpacing.xxs),
+        Text(value, style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
@@ -845,9 +694,7 @@ class _ManagementOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(
-        bottom: AppSpacing.sm,
-      ),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -858,39 +705,23 @@ class _ManagementOption extends StatelessWidget {
               Icon(
                 icon,
                 size: 28,
-                color: Theme.of(context)
-                    .colorScheme
-                    .primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
-              const SizedBox(
-                width: AppSpacing.md,
-              ),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
-                  crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      title,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyLarge,
-                    ),
-                    const SizedBox(
-                      height: AppSpacing.xxs,
-                    ),
+                    Text(title, style: Theme.of(context).textTheme.bodyLarge),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       subtitle,
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-              ),
+              const Icon(Icons.chevron_right),
             ],
           ),
         ),

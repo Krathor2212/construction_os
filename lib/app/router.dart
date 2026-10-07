@@ -19,6 +19,7 @@ import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 import '../features/tasks/presentation/pages/project_tasks_page.dart';
 import '../features/tasks/presentation/pages/project_task_details_page.dart';
+import '../features/quality/presentation/pages/project_inspections_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -62,6 +63,12 @@ final GoRouter appRouter = GoRouter(
         final projectId = state.pathParameters['projectId']!;
         return DailySiteReportsPage(projectId: projectId);
       },
+    ),
+    GoRoute(
+      path: '/projects/:projectId/inspections',
+      builder: (context, state) => ProjectInspectionsPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
     ),
     GoRoute(path: '/workers', builder: (context, state) => const WorkersPage()),
     GoRoute(

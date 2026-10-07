@@ -8,6 +8,8 @@ import '../../../workforce/presentation/providers/worker_providers.dart';
 import '../../../site_reports/presentation/providers/task_daily_site_report_providers.dart';
 import '../../domain/entities/project_task.dart';
 import '../../domain/entities/project_task_progress_update.dart';
+import '../../domain/entities/task_execution_comparison.dart';
+import '../../domain/services/task_execution_comparison_calculator.dart';
 import '../providers/project_task_providers.dart';
 import '../providers/project_task_progress_providers.dart';
 import '../providers/task_labour_providers.dart';
@@ -112,25 +114,7 @@ class _TaskDetailsContent extends ConsumerWidget {
             const SizedBox(height: AppSpacing.lg),
             _ExecutionSummaryCard(task: task),
             const SizedBox(height: AppSpacing.md),
-            _TaskSection(
-              title: 'Schedule',
-              icon: Icons.calendar_month_outlined,
-              child: Column(
-                children: [
-                  _DetailRow(
-                    label: 'Planned',
-                    value:
-                        '${_formatDate(task.plannedStartDate)} - '
-                        '${_formatDate(task.plannedEndDate)}',
-                  ),
-                  _DetailRow(label: 'Actual', value: _actualDateRange(task)),
-                  _DetailRow(
-                    label: 'Schedule variance',
-                    value: _scheduleVariance(task),
-                  ),
-                ],
-              ),
-            ),
+            _PlannedActualExecutionSection(task: task),
             const SizedBox(height: AppSpacing.md),
             _TaskSection(
               title: 'Task information',
@@ -594,43 +578,78 @@ Future<void> _updateExecution(
   );
 }
 
-String _actualDateRange(ProjectTask task) {
-  if (task.actualStartDate == null && task.actualEndDate == null) {
-    return 'Not started';
-  }
-
-  final start = task.actualStartDate == null
-      ? 'Not recorded'
-      : _formatDate(task.actualStartDate!);
-  final end = task.actualEndDate == null
-      ? 'In progress'
-      : _formatDate(task.actualEndDate!);
-
-  return '$start - $end';
-}
-
-String _scheduleVariance(ProjectTask task) {
-  if (task.actualEndDate == null) {
-    final today = DateTime.now();
-    if (today.isAfter(task.plannedEndDate) && task.progress < 100) {
-      final days = today.difference(task.plannedEndDate).inDays;
-      return 'Overdue by $days day${days == 1 ? '' : 's'}';
-    }
-    return 'Not available yet';
-  }
-
-  final variance = task.actualEndDate!.difference(task.plannedEndDate).inDays;
-  if (variance == 0) {
-    return 'On schedule';
-  }
-  if (variance > 0) {
-    return '$variance day${variance == 1 ? '' : 's'} late';
-  }
-  return '${variance.abs()} day${variance.abs() == 1 ? '' : 's'} early';
-}
-
 String _formatCurrency(double value) {
   return '₹${value.toStringAsFixed(2)}';
+}
+
+class _PlannedActualExecutionSection extends StatelessWidget {
+  const _PlannedActualExecutionSection({required this.task});
+
+  final ProjectTask task;
+
+  @override
+  Widget build(BuildContext context) {
+    final comparison = const TaskExecutionComparisonCalculator().calculate(
+      task,
+    );
+    final varianceColor = comparison.isOverdue
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
+
+    return _TaskSection(
+      title: 'Planned vs actual execution',
+      icon: Icons.compare_arrows_outlined,
+      child: Column(
+        children: [
+          _DetailRow(
+            label: 'Planned',
+            value:
+                '${_formatDate(task.plannedStartDate)} - '
+                '${_formatDate(task.plannedEndDate)} '
+                '(${_daysLabel(comparison.plannedDurationDays)})',
+          ),
+          _DetailRow(
+            label: 'Actual',
+            value: _actualDateRange(task, comparison),
+          ),
+          _DetailRow(
+            label: 'Variance',
+            value: comparison.varianceLabel,
+            valueColor: varianceColor,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _actualDateRange(
+    ProjectTask task,
+    TaskExecutionComparison comparison,
+  ) {
+    if (task.actualStartDate == null && task.actualEndDate == null) {
+      return task.status == ProjectTaskStatus.completed || task.progress >= 100
+          ? 'Completed (end date not recorded)'
+          : 'Not started';
+    }
+
+    final start = task.actualStartDate == null
+        ? 'Not recorded'
+        : _formatDate(task.actualStartDate!);
+    final end = task.actualEndDate == null
+        ? task.status == ProjectTaskStatus.completed || task.progress >= 100
+            ? 'Completed (end date not recorded)'
+            : comparison.actualDurationDays == null
+                ? 'In progress'
+                : 'In progress (${_daysLabel(comparison.actualDurationDays!)} elapsed)'
+        : '${_formatDate(task.actualEndDate!)} '
+              '(${_daysLabel(comparison.actualDurationDays!)})';
+
+    return '$start - $end';
+  }
+
+  String _daysLabel(int days) {
+    return '$days day${days == 1 ? '' : 's'}';
+  }
 }
 
 class _ExecutionSummaryCard extends StatelessWidget {
@@ -709,10 +728,15 @@ class _TaskSection extends StatelessWidget {
 }
 
 class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.label, required this.value});
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
 
   final String label;
   final String value;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
@@ -725,7 +749,17 @@ class _DetailRow extends StatelessWidget {
             width: 140,
             child: Text(label, style: Theme.of(context).textTheme.bodySmall),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: valueColor == null
+                  ? null
+                  : TextStyle(
+                      color: valueColor,
+                      fontWeight: FontWeight.w600,
+                    ),
+            ),
+          ),
         ],
       ),
     );

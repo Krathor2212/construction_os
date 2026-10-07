@@ -10,6 +10,7 @@ class DailySiteReport {
     required this.qualityNotes,
     this.phaseId,
     this.generalNotes,
+    this.taskIds = const [],
   });
 
   final String id;
@@ -25,4 +26,5 @@ class DailySiteReport {
   final String qualityNotes;
 
   final String? generalNotes;
+  final List<String> taskIds;
 }

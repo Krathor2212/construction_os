@@ -5,6 +5,7 @@ import '../../../../app/theme/app_spacing.dart';
 import '../../../projects/presentation/providers/project_providers.dart';
 import '../../../workforce/domain/entities/worker.dart';
 import '../../../workforce/presentation/providers/worker_providers.dart';
+import '../../../site_reports/presentation/providers/task_daily_site_report_providers.dart';
 import '../../domain/entities/project_task.dart';
 import '../../domain/entities/project_task_progress_update.dart';
 import '../providers/project_task_providers.dart';
@@ -170,6 +171,8 @@ class _TaskDetailsContent extends ConsumerWidget {
             _TaskLabourSection(task: task),
             const SizedBox(height: AppSpacing.md),
             _TaskProgressHistorySection(task: task),
+            const SizedBox(height: AppSpacing.md),
+            _TaskReportsSection(task: task),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(
               onPressed: () => _updateExecution(context, ref, task),
@@ -507,6 +510,53 @@ class _TaskProgressHistorySection extends ConsumerWidget {
   }
 }
 
+class _TaskReportsSection extends ConsumerWidget {
+  const _TaskReportsSection({required this.task});
+
+  final ProjectTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reportsAsync = ref.watch(taskDailySiteReportsProvider(task));
+
+    return _TaskSection(
+      title: 'Daily site reports',
+      icon: Icons.article_outlined,
+      child: reportsAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text(
+          'Unable to load site reports: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+        data: (reports) {
+          if (reports.isEmpty) {
+            return const Text('No daily site reports linked to this task.');
+          }
+
+          return Column(
+            children: reports
+                .map(
+                  (report) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.today_outlined),
+                    title: Text(_formatDate(report.date)),
+                    subtitle: Text(
+                      report.workCompleted.isEmpty
+                          ? 'No completed work recorded.'
+                          : report.workCompleted,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                )
+                .toList(),
+          );
+        },
+      ),
+    );
+  }
+}
+
 Future<void> _updateExecution(
   BuildContext context,
   WidgetRef ref,
@@ -522,7 +572,9 @@ Future<void> _updateExecution(
   }
 
   await ref.read(projectTaskActionsProvider).updateTask(updatedTask);
-  await ref.read(projectTaskProgressActionsProvider).createUpdate(
+  await ref
+      .read(projectTaskProgressActionsProvider)
+      .createUpdate(
         ProjectTaskProgressUpdate(
           id: 'task-progress-${DateTime.now().microsecondsSinceEpoch}',
           taskId: updatedTask.id,

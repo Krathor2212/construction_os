@@ -434,3 +434,17 @@ Implemented in the current application:
 - Repository tests for ordering and persistence
 
 The next Stage 1 slice is connecting tasks with daily site reports.
+
+### Completed Stage 1 slice: task and daily site report connection
+
+Implemented in the current application:
+
+- Daily site reports now support linked task IDs
+- Daily report form can link one or more active project tasks
+- Existing task links are preserved while editing reports
+- Task details show linked daily site reports with date and completed work
+- Linked reports are sorted newest-first
+- Mock reports include links to the sample excavation task
+- Repository coverage verifies linked report data
+
+The next Stage 1 slice is planned versus actual execution.

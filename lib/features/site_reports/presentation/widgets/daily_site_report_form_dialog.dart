@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../projects/domain/entities/project_phase.dart';
 import '../../../projects/presentation/providers/project_providers.dart';
+import '../../../tasks/presentation/providers/project_task_providers.dart';
 import '../../domain/entities/daily_site_report.dart';
 
 class DailySiteReportFormDialog extends ConsumerStatefulWidget {
@@ -25,6 +26,7 @@ class _DailySiteReportFormDialogState
   late DateTime _selectedDate;
   String? _selectedProjectId;
   String? _selectedPhaseId;
+  final Set<String> _selectedTaskIds = {};
 
   late final TextEditingController _workCompletedController;
   late final TextEditingController _workPlannedController;
@@ -44,6 +46,7 @@ class _DailySiteReportFormDialogState
     _selectedDate = report?.date ?? DateTime.now();
     _selectedProjectId = report?.projectId;
     _selectedPhaseId = report?.phaseId;
+    _selectedTaskIds.addAll(report?.taskIds ?? const []);
 
     _workCompletedController = TextEditingController(
       text: report?.workCompleted ?? '',
@@ -102,6 +105,7 @@ class _DailySiteReportFormDialogState
     setState(() {
       _selectedProjectId = projectId;
       _selectedPhaseId = null;
+      _selectedTaskIds.clear();
     });
   }
 
@@ -136,6 +140,7 @@ class _DailySiteReportFormDialogState
       generalNotes: _generalController.text.trim().isEmpty
           ? null
           : _generalController.text.trim(),
+      taskIds: _selectedTaskIds.toList(),
     );
 
     Navigator.of(context).pop(report);
@@ -267,6 +272,63 @@ class _DailySiteReportFormDialogState
                               ),
                             ],
                             onChanged: _onPhaseChanged,
+                          );
+                        },
+                      ),
+                const SizedBox(height: 16),
+                if (_selectedProjectId != null)
+                  ref
+                      .watch(projectTasksProvider(_selectedProjectId!))
+                      .when(
+                        loading: () => const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: LinearProgressIndicator(),
+                        ),
+                        error: (error, stackTrace) => Text(
+                          'Unable to load tasks: $error',
+                        ),
+                        data: (tasks) {
+                          final activeTasks = tasks
+                              .where((task) => !task.isArchived)
+                              .toList();
+                          final activeTaskIds = activeTasks
+                              .map((task) => task.id)
+                              .toSet();
+                          _selectedTaskIds.removeWhere(
+                            (id) => !activeTaskIds.contains(id),
+                          );
+
+                          if (activeTasks.isEmpty) {
+                            return const Text('No active tasks available.');
+                          }
+
+                          return InputDecorator(
+                            decoration: const InputDecoration(
+                              labelText: 'Linked Tasks',
+                              border: OutlineInputBorder(),
+                            ),
+                            child: Column(
+                              children: activeTasks
+                                  .map(
+                                    (task) => CheckboxListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      value: _selectedTaskIds.contains(
+                                        task.id,
+                                      ),
+                                      title: Text(task.name),
+                                      onChanged: (selected) {
+                                        setState(() {
+                                          if (selected == true) {
+                                            _selectedTaskIds.add(task.id);
+                                          } else {
+                                            _selectedTaskIds.remove(task.id);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                           );
                         },
                       ),

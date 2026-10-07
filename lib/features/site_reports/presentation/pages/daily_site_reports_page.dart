@@ -3,68 +3,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../projects/domain/entities/project_phase.dart';
 import '../../../projects/presentation/providers/project_providers.dart';
+import '../../../tasks/domain/entities/project_task.dart';
+import '../../../tasks/presentation/providers/project_task_providers.dart';
 import '../../domain/entities/daily_site_report.dart';
 import '../providers/daily_site_report_providers.dart';
 import '../widgets/daily_site_report_form_dialog.dart';
 
 class DailySiteReportsPage extends ConsumerWidget {
-  const DailySiteReportsPage({
-    super.key,
-    required this.projectId,
-  });
+  const DailySiteReportsPage({super.key, required this.projectId});
 
   final String projectId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final reportsAsync = ref.watch(
-      dailySiteReportsProvider(
-        DailySiteReportFilter(
-          projectId: projectId,
-        ),
-      ),
+      dailySiteReportsProvider(DailySiteReportFilter(projectId: projectId)),
     );
 
-    final phasesAsync = ref.watch(
-      projectPhasesProvider(projectId),
-    );
+    final phasesAsync = ref.watch(projectPhasesProvider(projectId));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Site Reports'),
-      ),
+      appBar: AppBar(title: const Text('Daily Site Reports')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _addReport(
-          context,
-          ref,
-        ),
+        onPressed: () => _addReport(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Add Report'),
       ),
       body: reportsAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, stackTrace) => _ErrorState(
           message: error.toString(),
           onRetry: () {
             ref.invalidate(
               dailySiteReportsProvider(
-                DailySiteReportFilter(
-                  projectId: projectId,
-                ),
+                DailySiteReportFilter(projectId: projectId),
               ),
             );
           },
         ),
         data: (reports) {
           if (reports.isEmpty) {
-            return _EmptyState(
-              onAddReport: () => _addReport(
-                context,
-                ref,
-              ),
-            );
+            return _EmptyState(onAddReport: () => _addReport(context, ref));
           }
 
           final phases = phasesAsync.when(
@@ -77,62 +56,35 @@ class DailySiteReportsPage extends ConsumerWidget {
             onRefresh: () async {
               ref.invalidate(
                 dailySiteReportsProvider(
-                  DailySiteReportFilter(
-                    projectId: projectId,
-                  ),
+                  DailySiteReportFilter(projectId: projectId),
                 ),
               );
 
               await ref.read(
                 dailySiteReportsProvider(
-                  DailySiteReportFilter(
-                    projectId: projectId,
-                  ),
+                  DailySiteReportFilter(projectId: projectId),
                 ).future,
               );
             },
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                16,
-                16,
-                16,
-                96,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
               children: [
-                _SummaryHeader(
-                  reportCount: reports.length,
-                ),
+                _SummaryHeader(reportCount: reports.length),
                 const SizedBox(height: 16),
                 ...reports.map(
                   (report) => Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: 12,
-                    ),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: _ReportCard(
                       report: report,
-                      phaseName: _phaseName(
-                        phases,
-                        report.phaseId,
-                      ),
+                      phaseName: _phaseName(phases, report.phaseId),
                       onTap: () => _openReport(
                         context,
                         ref,
                         report,
-                        phaseName: _phaseName(
-                          phases,
-                          report.phaseId,
-                        ),
+                        phaseName: _phaseName(phases, report.phaseId),
                       ),
-                      onEdit: () => _editReport(
-                        context,
-                        ref,
-                        report,
-                      ),
-                      onDelete: () => _deleteReport(
-                        context,
-                        ref,
-                        report,
-                      ),
+                      onEdit: () => _editReport(context, ref, report),
+                      onDelete: () => _deleteReport(context, ref, report),
                     ),
                   ),
                 ),
@@ -144,10 +96,7 @@ class DailySiteReportsPage extends ConsumerWidget {
     );
   }
 
-  Future<void> _addReport(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _addReport(BuildContext context, WidgetRef ref) async {
     final report = await showDialog<DailySiteReport>(
       context: context,
       builder: (_) => const DailySiteReportFormDialog(),
@@ -157,18 +106,12 @@ class DailySiteReportsPage extends ConsumerWidget {
       return;
     }
 
-    final repository = ref.read(
-      dailySiteReportRepositoryProvider,
-    );
+    final repository = ref.read(dailySiteReportRepositoryProvider);
 
     await repository.createReport(report);
 
     ref.invalidate(
-      dailySiteReportsProvider(
-        DailySiteReportFilter(
-          projectId: projectId,
-        ),
-      ),
+      dailySiteReportsProvider(DailySiteReportFilter(projectId: projectId)),
     );
   }
 
@@ -179,34 +122,22 @@ class DailySiteReportsPage extends ConsumerWidget {
   ) async {
     final updatedReport = await showDialog<DailySiteReport>(
       context: context,
-      builder: (_) => DailySiteReportFormDialog(
-        initialReport: report,
-      ),
+      builder: (_) => DailySiteReportFormDialog(initialReport: report),
     );
 
     if (updatedReport == null) {
       return;
     }
 
-    final repository = ref.read(
-      dailySiteReportRepositoryProvider,
-    );
+    final repository = ref.read(dailySiteReportRepositoryProvider);
 
     await repository.updateReport(updatedReport);
 
     ref.invalidate(
-      dailySiteReportsProvider(
-        DailySiteReportFilter(
-          projectId: projectId,
-        ),
-      ),
+      dailySiteReportsProvider(DailySiteReportFilter(projectId: projectId)),
     );
 
-    ref.invalidate(
-      dailySiteReportProvider(
-        report.id,
-      ),
-    );
+    ref.invalidate(dailySiteReportProvider(report.id));
   }
 
   Future<void> _deleteReport(
@@ -219,9 +150,7 @@ class DailySiteReportsPage extends ConsumerWidget {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete Site Report?'),
-          content: const Text(
-            'This report will be permanently removed.',
-          ),
+          content: const Text('This report will be permanently removed.'),
           actions: [
             TextButton(
               onPressed: () {
@@ -244,27 +173,15 @@ class DailySiteReportsPage extends ConsumerWidget {
       return;
     }
 
-    final repository = ref.read(
-      dailySiteReportRepositoryProvider,
-    );
+    final repository = ref.read(dailySiteReportRepositoryProvider);
 
-    await repository.deleteReport(
-      report.id,
-    );
+    await repository.deleteReport(report.id);
 
     ref.invalidate(
-      dailySiteReportsProvider(
-        DailySiteReportFilter(
-          projectId: projectId,
-        ),
-      ),
+      dailySiteReportsProvider(DailySiteReportFilter(projectId: projectId)),
     );
 
-    ref.invalidate(
-      dailySiteReportProvider(
-        report.id,
-      ),
-    );
+    ref.invalidate(dailySiteReportProvider(report.id));
   }
 
   Future<void> _openReport(
@@ -275,17 +192,12 @@ class DailySiteReportsPage extends ConsumerWidget {
   }) async {
     await showDialog<void>(
       context: context,
-      builder: (_) => _ReportDetailsDialog(
-        report: report,
-        phaseName: phaseName,
-      ),
+      builder: (_) =>
+          _ReportDetailsDialog(report: report, phaseName: phaseName),
     );
   }
 
-  String _phaseName(
-    List<ProjectPhase> phases,
-    String? phaseId,
-  ) {
+  String _phaseName(List<ProjectPhase> phases, String? phaseId) {
     if (phaseId == null) {
       return 'Whole Project';
     }
@@ -301,9 +213,7 @@ class DailySiteReportsPage extends ConsumerWidget {
 }
 
 class _SummaryHeader extends StatelessWidget {
-  const _SummaryHeader({
-    required this.reportCount,
-  });
+  const _SummaryHeader({required this.reportCount});
 
   final int reportCount;
 
@@ -348,10 +258,7 @@ class _SummaryHeader extends StatelessWidget {
                 ],
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              color: theme.colorScheme.outline,
-            ),
+            Icon(Icons.chevron_right, color: theme.colorScheme.outline),
           ],
         ),
       ),
@@ -378,12 +285,10 @@ class _ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final formattedDate = MaterialLocalizations.of(
-      context,
-    ).formatMediumDate(report.date);
+    final formattedDate = MaterialLocalizations.of(context)
+        .formatMediumDate(report.date);
 
-    final hasIssues =
-        report.issuesAndDelays.trim().isNotEmpty;
+    final hasIssues = report.issuesAndDelays.trim().isNotEmpty;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -399,8 +304,7 @@ class _ReportCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
@@ -413,8 +317,7 @@ class _ReportCard extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 formattedDate,
-                                style: theme.textTheme.titleMedium
-                                    ?.copyWith(
+                                style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -428,17 +331,14 @@ class _ReportCard extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme
-                                .surfaceContainerHighest,
-                            borderRadius:
-                                BorderRadius.circular(20),
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             phaseName,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall
-                                ?.copyWith(
+                            style: theme.textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -495,10 +395,7 @@ class _ReportCard extends StatelessWidget {
                     color: theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    'Work recorded',
-                    style: theme.textTheme.bodySmall,
-                  ),
+                  Text('Work recorded', style: theme.textTheme.bodySmall),
                   if (hasIssues) ...[
                     const SizedBox(width: 16),
                     Icon(
@@ -525,45 +422,26 @@ class _ReportCard extends StatelessWidget {
   }
 }
 
-class _ReportDetailsDialog extends StatelessWidget {
-  const _ReportDetailsDialog({
-    required this.report,
-    required this.phaseName,
-  });
+class _ReportDetailsDialog extends ConsumerWidget {
+  const _ReportDetailsDialog({required this.report, required this.phaseName});
 
   final DailySiteReport report;
   final String phaseName;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final tasksAsync = ref.watch(projectTasksProvider(report.projectId));
 
-    final formattedDate = MaterialLocalizations.of(
-      context,
-    ).formatMediumDate(report.date);
+    final formattedDate = MaterialLocalizations.of(context)
+        .formatMediumDate(report.date);
 
-    final hasIssues =
-        report.issuesAndDelays.trim().isNotEmpty;
+    final hasIssues = report.issuesAndDelays.trim().isNotEmpty;
 
     return AlertDialog(
-      titlePadding: const EdgeInsets.fromLTRB(
-        24,
-        24,
-        24,
-        8,
-      ),
-      contentPadding: const EdgeInsets.fromLTRB(
-        24,
-        8,
-        24,
-        8,
-      ),
-      actionsPadding: const EdgeInsets.fromLTRB(
-        24,
-        8,
-        24,
-        20,
-      ),
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+      contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
       title: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -591,10 +469,7 @@ class _ReportDetailsDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  formattedDate,
-                  style: theme.textTheme.bodyMedium,
-                ),
+                Text(formattedDate, style: theme.textTheme.bodyMedium),
               ],
             ),
           ),
@@ -606,10 +481,9 @@ class _ReportDetailsDialog extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ReportContextCard(
-                date: formattedDate,
-                phaseName: phaseName,
-              ),
+              _ReportContextCard(date: formattedDate, phaseName: phaseName),
+              const SizedBox(height: 18),
+              _LinkedTasksSection(report: report, tasksAsync: tasksAsync),
               const SizedBox(height: 18),
               _DetailSection(
                 icon: Icons.construction_outlined,
@@ -660,11 +534,45 @@ class _ReportDetailsDialog extends StatelessWidget {
   }
 }
 
+class _LinkedTasksSection extends StatelessWidget {
+  const _LinkedTasksSection({required this.report, required this.tasksAsync});
+
+  final DailySiteReport report;
+  final AsyncValue<List<ProjectTask>> tasksAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    return tasksAsync.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (error, _) => Text(
+        'Unable to load linked tasks: $error',
+        style: TextStyle(color: Theme.of(context).colorScheme.error),
+      ),
+      data: (tasks) {
+        final linkedTasks = tasks
+            .where((task) => report.taskIds.contains(task.id))
+            .toList();
+
+        if (linkedTasks.isEmpty) {
+          return const _DetailSection(
+            icon: Icons.task_alt_outlined,
+            title: 'Linked Tasks',
+            content: 'No tasks linked to this report.',
+          );
+        }
+
+        return _DetailSection(
+          icon: Icons.task_alt_outlined,
+          title: 'Linked Tasks',
+          content: linkedTasks.map((task) => task.name).join('\n'),
+        );
+      },
+    );
+  }
+}
+
 class _ReportContextCard extends StatelessWidget {
-  const _ReportContextCard({
-    required this.date,
-    required this.phaseName,
-  });
+  const _ReportContextCard({required this.date, required this.phaseName});
 
   final String date;
   final String phaseName;
@@ -718,24 +626,15 @@ class _ContextItem extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.primary,
-        ),
+        Icon(icon, size: 18, color: theme.colorScheme.primary),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
-              style: theme.textTheme.labelSmall,
-            ),
+            Text(label, style: theme.textTheme.labelSmall),
             const SizedBox(height: 2),
             ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: 240,
-              ),
+              constraints: const BoxConstraints(maxWidth: 240),
               child: Text(
                 value,
                 maxLines: 1,
@@ -815,13 +714,9 @@ class _DetailSection extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              isEmpty
-                  ? 'No information recorded.'
-                  : content,
+              isEmpty ? 'No information recorded.' : content,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: isEmpty
-                    ? theme.colorScheme.onSurfaceVariant
-                    : null,
+                color: isEmpty ? theme.colorScheme.onSurfaceVariant : null,
                 height: 1.5,
               ),
             ),
@@ -833,9 +728,7 @@ class _DetailSection extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.onAddReport,
-  });
+  const _EmptyState({required this.onAddReport});
 
   final VoidCallback onAddReport;
 
@@ -891,10 +784,7 @@ class _EmptyState extends StatelessWidget {
 }
 
 class _ErrorState extends StatelessWidget {
-  const _ErrorState({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorState({required this.message, required this.onRetry});
 
   final String message;
   final VoidCallback onRetry;
@@ -907,10 +797,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 48,
-            ),
+            const Icon(Icons.error_outline, size: 48),
             const SizedBox(height: 12),
             const Text(
               'Unable to load site reports.',
@@ -924,10 +811,7 @@ class _ErrorState extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 16),
-            OutlinedButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
+            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),
       ),

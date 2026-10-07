@@ -21,6 +21,7 @@ class MockDailySiteReportRepository
           'Masonry alignment and level were checked before closing the work area.',
       generalNotes:
           'Overall progress was satisfactory.',
+      taskIds: ['task-001'],
     ),
     DailySiteReport(
       id: 'site-report-002',
@@ -39,6 +40,7 @@ class MockDailySiteReportRepository
           'Foundation dimensions and levels were verified.',
       generalNotes:
           'Site activities progressed according to plan.',
+      taskIds: ['task-001'],
     ),
   ];
 

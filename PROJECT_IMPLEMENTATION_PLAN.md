@@ -405,3 +405,18 @@ Implemented in the current application:
 The next Stage 1 slice is task-level labour tracking. It should build on these
 worker assignments and existing attendance/labour-cost calculations without
 adding backend integration.
+
+### Completed Stage 1 slice: task-level labour tracking
+
+Implemented in the current application:
+
+- Task labour summary domain entity and calculator
+- Labour summary provider using assigned workers and attendance records
+- Task date-window filtering with project and phase matching
+- Base wage and overtime cost calculation using existing workforce rules
+- Task details labour section showing attendance count, hours, overtime, and
+  total labour cost
+- Focused calculator tests for assigned-worker matching and cost calculation
+- Mock attendance aligned with the sample excavation task window
+
+The next Stage 1 slice is task progress history.

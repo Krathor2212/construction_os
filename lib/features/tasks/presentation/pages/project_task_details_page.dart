@@ -7,6 +7,7 @@ import '../../../workforce/domain/entities/worker.dart';
 import '../../../workforce/presentation/providers/worker_providers.dart';
 import '../../domain/entities/project_task.dart';
 import '../providers/project_task_providers.dart';
+import '../providers/task_labour_providers.dart';
 import '../widgets/project_task_form_dialog.dart';
 
 class ProjectTaskDetailsPage extends ConsumerWidget {
@@ -163,6 +164,8 @@ class _TaskDetailsContent extends ConsumerWidget {
             ],
             const SizedBox(height: AppSpacing.md),
             _TaskWorkersSection(task: task),
+            const SizedBox(height: AppSpacing.md),
+            _TaskLabourSection(task: task),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(
               onPressed: () => _updateExecution(context, ref, task),
@@ -372,6 +375,80 @@ class _AssignWorkersDialogState extends State<_AssignWorkersDialog> {
   }
 }
 
+class _TaskLabourSection extends ConsumerWidget {
+  const _TaskLabourSection({required this.task});
+
+  final ProjectTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final summaryAsync = ref.watch(taskLabourSummaryProvider(task));
+
+    return _TaskSection(
+      title: 'Task-level labour',
+      icon: Icons.payments_outlined,
+      child: summaryAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text(
+          'Unable to load labour summary: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+        data: (summary) {
+          if (task.assignedWorkerIds.isEmpty) {
+            return const Text(
+              'Assign workers to this task to track recorded labour.',
+            );
+          }
+
+          if (summary.attendanceRecordCount == 0) {
+            return const Text(
+              'No attendance records found during the task window.',
+            );
+          }
+
+          return Column(
+            children: [
+              _DetailRow(
+                label: 'Attendance records',
+                value: '${summary.attendanceRecordCount}',
+              ),
+              _DetailRow(
+                label: 'Hours worked',
+                value: summary.totalHoursWorked.toStringAsFixed(1),
+              ),
+              _DetailRow(
+                label: 'Overtime hours',
+                value: summary.totalOvertimeHours.toStringAsFixed(1),
+              ),
+              _DetailRow(
+                label: 'Base labour',
+                value: _formatCurrency(summary.baseLabourCost),
+              ),
+              _DetailRow(
+                label: 'Overtime cost',
+                value: _formatCurrency(summary.overtimeCost),
+              ),
+              const Divider(),
+              _DetailRow(
+                label: 'Total labour cost',
+                value: _formatCurrency(summary.totalLabourCost),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Matched by assigned worker, project, phase, and task date window.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
 Future<void> _updateExecution(
   BuildContext context,
   WidgetRef ref,
@@ -430,6 +507,10 @@ String _scheduleVariance(ProjectTask task) {
     return '$variance day${variance == 1 ? '' : 's'} late';
   }
   return '${variance.abs()} day${variance.abs() == 1 ? '' : 's'} early';
+}
+
+String _formatCurrency(double value) {
+  return '₹${value.toStringAsFixed(2)}';
 }
 
 class _ExecutionSummaryCard extends StatelessWidget {

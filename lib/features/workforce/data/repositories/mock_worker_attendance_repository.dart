@@ -7,7 +7,7 @@ class MockWorkerAttendanceRepository
     WorkerAttendance(
       id: 'worker-attendance-001',
       workerId: 'worker-001',
-      date: DateTime(2026, 9, 20),
+      date: DateTime(2026, 9, 22),
       status: AttendanceStatus.present,
       projectId: 'project-001',
       phaseId: 'phase-001',
@@ -18,7 +18,7 @@ class MockWorkerAttendanceRepository
     WorkerAttendance(
       id: 'worker-attendance-002',
       workerId: 'worker-002',
-      date: DateTime(2026, 9, 20),
+      date: DateTime(2026, 9, 22),
       status: AttendanceStatus.present,
       projectId: 'project-001',
       phaseId: 'phase-001',
@@ -29,7 +29,7 @@ class MockWorkerAttendanceRepository
     WorkerAttendance(
       id: 'worker-attendance-003',
       workerId: 'worker-003',
-      date: DateTime(2026, 9, 20),
+      date: DateTime(2026, 9, 22),
       status: AttendanceStatus.halfDay,
       projectId: 'project-001',
       phaseId: 'phase-001',
@@ -39,7 +39,7 @@ class MockWorkerAttendanceRepository
     WorkerAttendance(
       id: 'worker-attendance-004',
       workerId: 'worker-004',
-      date: DateTime(2026, 9, 20),
+      date: DateTime(2026, 9, 22),
       status: AttendanceStatus.absent,
       projectId: 'project-001',
       phaseId: 'phase-001',

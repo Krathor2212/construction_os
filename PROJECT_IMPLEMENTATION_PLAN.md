@@ -67,7 +67,7 @@ profitability.
 | Tasks and execution | Core execution slices implemented |
 | Quality management | Full quality workflow implemented through unified quality history |
 | Finance | Pending |
-| Logistics and inventory | Delivery management foundation |
+| Logistics and inventory | Delivery management foundation; inventory next |
 | Planning, BOQ, and design | Pending |
 | Communication and documents | Pending |
 | Backend, authentication, and sync | Intentionally deferred |
@@ -77,6 +77,7 @@ profitability.
 
 - Flutter static analysis: passing
 - Automated test suite: **42 tests passing**
+- Last validated: **7 October 2026**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
 - Backend API: not yet integrated
@@ -507,6 +508,26 @@ infrastructure while the current feature stages are incomplete.
 - Riverpod project history provider
 - Project quality-history screen and navigation route
 - Repository coverage for aggregation, ordering, and project filtering
+
+### Stage 3: Material delivery management
+
+- Material delivery entity linked to the project, material requirement, and
+  material
+- Delivery lifecycle statuses: expected, in transit, partially received,
+  received, and cancelled
+- Quantity, unit, delivery date, supplier, delivery reference, notes, and
+  optional purchase-order fields
+- Mock repository with newest-first project delivery ordering
+- Riverpod project query plus create and update actions
+- Project material-deliveries screen with loading, empty, error, and success
+  states
+- Delivery form with requirement selection, positive quantity validation,
+  supplier, reference, status, date, and notes
+- Inline delivery status updates from each delivery card
+- Material ID-to-name resolution in delivery cards
+- Repository tests for project filtering/order and status updates
+- Route and project-navigation integration
+- Validated with `flutter analyze`, `flutter test`, and `git diff --check`
 
 ---
 

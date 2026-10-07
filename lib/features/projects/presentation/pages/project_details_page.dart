@@ -141,6 +141,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.local_shipping_outlined,
+            title: 'Material Deliveries',
+            subtitle: 'Track inbound materials against requirements',
+            onTap: () {
+              context.push('/projects/${project.id}/material-deliveries');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.assignment_outlined,
             title: 'Daily Site Reports',
             subtitle: 'Record daily work, issues, safety and quality',

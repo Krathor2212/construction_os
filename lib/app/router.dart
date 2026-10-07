@@ -15,6 +15,7 @@ import '../features/procurement/presentation/pages/purchase_quotation_details_pa
 import '../features/procurement/presentation/pages/purchase_orders_page.dart';
 import '../features/procurement/presentation/pages/purchase_order_details_page.dart';
 import '../features/materials/presentation/pages/material_requirements_page.dart';
+import '../features/materials/presentation/pages/project_material_deliveries_page.dart';
 import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 import '../features/tasks/presentation/pages/project_tasks_page.dart';
@@ -149,6 +150,12 @@ final GoRouter appRouter = GoRouter(
         final projectId = state.pathParameters['projectId']!;
         return MaterialRequirementsPage(projectId: projectId);
       },
+    ),
+    GoRoute(
+      path: '/projects/:projectId/material-deliveries',
+      builder: (context, state) => ProjectMaterialDeliveriesPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
     ),
     GoRoute(
       path: '/workers/:workerId/attendance',

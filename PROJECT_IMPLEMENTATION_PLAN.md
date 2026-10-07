@@ -67,7 +67,7 @@ profitability.
 | Tasks and execution | Core execution slices implemented |
 | Quality management | Full quality workflow implemented through unified quality history |
 | Finance | Pending |
-| Logistics and inventory | Pending |
+| Logistics and inventory | Delivery management foundation |
 | Planning, BOQ, and design | Pending |
 | Communication and documents | Pending |
 | Backend, authentication, and sync | Intentionally deferred |
@@ -76,7 +76,7 @@ profitability.
 ### Validation baseline
 
 - Flutter static analysis: passing
-- Automated test suite: **40 tests passing**
+- Automated test suite: **42 tests passing**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
 - Backend API: not yet integrated
@@ -314,7 +314,7 @@ infrastructure while the current feature stages are incomplete.
 
 ### Stage 3 - Materials and logistics
 
-- [ ] Delivery management
+- [x] Delivery management
 - [ ] Inventory
 - [ ] Material receipt
 - [ ] Material consumption
@@ -570,28 +570,30 @@ Project foundation
   -> Daily site report foundation
   -> Task execution foundation
   -> Quality management foundation
-  -> NEXT: Delivery management
+  -> Delivery management foundation
+  -> NEXT: Inventory
 ```
 
 The quality stage is now complete for the current roadmap scope. The next
-planned feature is **delivery management**, beginning Stage 3 with inbound
-material deliveries linked to project requirements and procurement records.
+planned feature is **inventory**, building on inbound deliveries and material
+requirements.
 
-Before implementing reinspection, preserve the current decisions:
+Before implementing inventory, preserve the current decisions:
 
 - Keep it project-scoped.
-- Support optional phase/task context.
+- Build on material requirements and recorded deliveries.
 - Use a mock repository and Riverpod providers.
 - Do not introduce backend APIs or authentication.
 - Add focused repository/domain tests.
-- Keep the relationship between the original quality issue, corrective action,
-  and follow-up inspection explicit.
+- Keep received quantities separate from planned requirement quantities until
+  inventory rules are explicitly implemented.
 
-Open design questions for the quality stage:
+Open design questions for the materials stage:
 
-- Should a corrective action be linked to a defect, punch-list item, or both?
-- Should completion require a completion date and completion notes?
-- Should reinspection be required before a defect or punch item can be closed?
+- Should delivery creation update the material requirement procurement status?
+- Should delivery quantities be capped by the remaining requirement quantity?
+- Should received deliveries automatically create inventory stock records?
+- Should purchase orders be linked directly to delivery records?
 - Should quality history be shown directly on task details?
 
 Resolve these questions when the relevant feature is implemented, not by adding

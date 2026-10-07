@@ -1,84 +1,111 @@
-# SuGoRa Construction OS - Implementation Plan
+# SuGoRa Construction OS
 
-> This plan incorporates the detailed product context in
-> [chatgpt-update.md](./chatgpt-update.md). That file is the source context;
-> this document is the working implementation reference.
+## Product implementation plan
 
-## Purpose
+> **Document status:** Active implementation source of truth
+> **Release target:** `v2.0.0-beta`
+> **Last updated:** 7 October 2026
+> **Application state:** Development prototype
 
-This document is the durable product and implementation reference for SuGoRa
-Construction OS. Read it before adding or changing a feature. The current
-priority is to finish and validate the application features using mock
-repositories. Do not start backend/API/database integration until the planned
-frontend and domain feature stages are complete.
+This document records the product direction, implementation order, architecture
+constraints, completed feature slices, and the current definition of done.
+Read it before starting a new feature or changing an existing domain model.
 
-Current release target: `v2.0.0-beta`.
+---
 
-Current state: development prototype with mock/local repositories; not
-production-ready.
+## Contents
 
-## Product vision
+- [1. Product vision](#1-product-vision)
+- [2. Current project snapshot](#2-current-project-snapshot)
+- [3. Product scope](#3-product-scope)
+- [4. Architecture](#4-architecture)
+- [5. Backend and persistence boundary](#5-backend-and-persistence-boundary)
+- [6. Implementation roadmap](#6-implementation-roadmap)
+- [7. Completed implementation](#7-completed-implementation)
+- [8. Quality and engineering rules](#8-quality-and-engineering-rules)
+- [9. Current working position](#9-current-working-position)
+- [10. Definition of done](#10-definition-of-done)
 
-SuGoRa is a construction management and operations OS. It should eventually
-connect the complete project lifecycle:
+---
+
+## 1. Product vision
+
+SuGoRa is a construction management and operations OS. It should connect the
+complete project lifecycle:
 
 ```text
-Client -> Project -> Design/Planning -> BOQ -> Materials/Procurement
+Client -> Project -> Planning/Design -> BOQ -> Materials/Procurement
 -> Delivery/Inventory -> Workforce -> Tasks/Execution -> Quality
 -> Bills/Payments -> Finance/Profitability -> Completion
 ```
 
-The value comes from connected operational data. For example, a task can
-require a quantity of steel; the requirement feeds procurement, purchase
-orders, delivery, inventory, workforce consumption, task progress, cost, and
-project financials.
+The long-term value comes from connected operational data. For example, a
+task's steel requirement should be traceable through procurement, purchase
+orders, delivery, inventory, workforce consumption, progress, cost, and project
+profitability.
 
-## Current product position
+### Guiding product principles
 
-The app is approximately at the first major third of the full product vision.
+1. Build the operational workflow before the infrastructure.
+2. Keep records connected by stable IDs.
+3. Make schedule, cost, labour, and quality information visible at project and
+   task level.
+4. Preserve a path to offline-first use on construction sites.
+5. Prefer explicit validation and auditable state changes over convenience.
 
-| Area | Status |
+---
+
+## 2. Current project snapshot
+
+| Area | Current state |
 | --- | --- |
-| Company | Pending |
-| Clients | Foundation/partial |
-| Projects | Strong foundation |
-| Phases and timeline | Implemented |
-| Tasks and execution | Basic lifecycle implemented; execution being built |
-| Design and BOQ | Pending |
+| Projects and phases | Strong foundation |
 | Materials | Good foundation |
 | Procurement and suppliers | Strong foundation |
-| Workforce | Strong foundation |
+| Workforce and labour costing | Strong foundation |
 | Daily site operations | Foundation |
-| Quality | Pending |
-| Logistics | Pending |
+| Tasks and execution | Core execution slices implemented |
+| Quality management | Inspections, defects, punch lists, and corrective actions implemented |
 | Finance | Pending |
-| Analytics | Foundation |
-| Communication, documents, notifications | Pending |
-| Backend and sync | Pending; intentionally deferred |
-| AI | Future |
+| Logistics and inventory | Pending |
+| Planning, BOQ, and design | Pending |
+| Communication and documents | Pending |
+| Backend, authentication, and sync | Intentionally deferred |
+| AI and advanced intelligence | Future |
 
-## What is implemented
+### Validation baseline
 
-### Projects and phases
+- Flutter static analysis: passing
+- Automated test suite: **36 tests passing**
+- Data source: mock/in-memory repositories
+- Production readiness: not yet ready
+- Backend API: not yet integrated
+- Authentication and authorization: not yet integrated
 
-Projects are the central object and are connected through `projectId` to:
+---
 
-- Project information and client relationship
-- Phases
+## 3. Product scope
+
+### 3.1 Projects and phases
+
+Projects are the central object. Current project relationships include:
+
+- Client and project information
+- Phases and timeline
 - Contacts
-- Timeline
 - Quotations
 - Purchase quotations and purchase orders
 - Material requirements
 - Workforce records
 - Daily site reports
 - Tasks
+- Quality records
 
 Phases support planned and actual dates, status, progress, notes, and archive
-state. This is the foundation for schedule variance, cost tracking, task
-planning, labour allocation, material requirements, and profitability.
+state. These relationships are the foundation for schedule variance, labour
+allocation, material planning, quality tracking, and future profitability.
 
-### Materials and procurement
+### 3.2 Materials and procurement
 
 Implemented foundations include:
 
@@ -86,20 +113,20 @@ Implemented foundations include:
 - Phase-linked material requirements
 - Procurement allocation against requirements
 - Suppliers
-- Purchase quotations and quotation line items
-- Purchase orders and purchase-order line items
+- Purchase quotations and line items
+- Purchase orders and line items
 - Quotation-to-purchase-order conversion
 - Duplicate conversion prevention
 - Quantity and financial validation
 
-The intended future material flow is:
+The intended material lifecycle is:
 
 ```text
 Required -> Ordered -> Dispatched -> Delivered -> Received -> Stored
 -> Consumed -> Wasted
 ```
 
-### Workforce and labour costing
+### 3.3 Workforce and labour costing
 
 Workers support name, phone, role, daily wage, overtime rate, active state, and
 notes. Attendance supports present, half-day, absent, leave, hours worked, and
@@ -109,14 +136,14 @@ Current costing rules:
 
 - Present: full daily wage
 - Half day: 50% of daily wage
-- Absent/leave: zero base cost
-- Overtime: overtime hours multiplied by the worker overtime rate
-- No overtime multiplier is invented; the configured overtime rate is used
+- Absent or leave: zero base cost
+- Overtime: overtime hours multiplied by the configured worker overtime rate
+- No unconfigured overtime multiplier is invented
 
-Implemented summaries include daily labour cost and labour cost by project
-phase. These calculations are domain services and have automated tests.
+Daily labour, phase labour, and task labour summaries are calculated through
+domain services and covered by automated tests.
 
-### Daily site reports
+### 3.4 Daily site reports
 
 Daily reports capture:
 
@@ -126,134 +153,35 @@ Daily reports capture:
 - Safety notes
 - Quality notes
 - General notes
-- Project and date filtering
+- Project and date filters
+- Linked task IDs
 
 Reports are intended to become the project's operational memory.
 
-### Tasks and basic lifecycle
+### 3.5 Task execution model
 
-Tasks currently support:
-
-- Project and phase association
-- Name and description
-- Planned start/end
-- Actual start/end
-- Status: not started, in progress, completed, delayed, on hold
-- Priority: low, medium, high, critical
-- Progress percentage
-- Notes
-- Archive state
-- Create, view, edit, archive
-- Validation, loading, error, empty, and refresh states
-
-The task lifecycle is the current implementation focus. The task should evolve
-from a checklist into an execution record containing:
+Tasks are evolving from checklist items into execution records:
 
 ```text
-What?         Foundation excavation
-Where?        Foundation phase
-When?         Planned and actual dates
-Who?          Assigned crew
-How much?     Planned quantity
-Done?         Completed quantity
-Materials?    Used quantities
-Labour?       Assigned/costed labour
-Issues?       Execution issues
-Quality?      Inspection/quality information
-Progress?     Daily progress updates
-Completion?   Expected completion date
+What?          Foundation excavation
+Where?         Foundation phase
+When?          Planned and actual dates
+Who?           Assigned crew
+How much?      Planned quantity
+Done?          Completed quantity
+Materials?     Used quantities
+Labour?        Assigned and costed labour
+Issues?        Execution issues
+Quality?       Inspection and quality information
+Progress?      Daily progress updates
+Completion?    Expected completion date
 ```
 
-## Implementation sequence
+---
 
-Do not jump randomly between modules. Work in this order.
+## 4. Architecture
 
-### Stage 1 - Finish execution
-
-1. Task details
-2. Task execution updates
-3. Worker assignment to tasks
-4. Task-level labour
-5. Task progress history
-6. Connect tasks with daily site reports
-7. Planned versus actual execution
-
-### Stage 2 - Quality
-
-8. Inspections
-9. Defects
-10. Snag/punch lists
-11. Corrective actions
-12. Reinspection
-13. Quality history
-
-### Stage 3 - Materials and logistics
-
-14. Delivery management
-15. Inventory
-16. Material receipt
-17. Material consumption
-18. Wastage
-19. Material forecasting
-
-### Stage 4 - Finance
-
-20. Supplier bills
-21. Supplier payments
-22. Client invoices and milestones
-23. Client payments
-24. Expenses
-25. Ledger
-26. Cash flow
-27. Project profitability
-28. Cost variance
-
-### Stage 5 - Planning
-
-29. BOQ
-30. Design management
-31. Drawing revisions
-32. Engineers and designers
-33. Planned versus actual quantities
-
-### Stage 6 - Business operations
-
-34. Client CRM
-35. Supplier performance
-36. Documents
-37. Reminders
-38. Notifications
-39. Communication
-40. WhatsApp integration planning
-41. Phone CRM
-
-### Stage 7 - Production infrastructure
-
-42. Authentication
-43. Role-based access control
-44. PostgreSQL backend
-45. Offline database
-46. Synchronization engine
-47. Audit logs
-48. Cloud storage
-49. Backup and recovery
-50. Production deployment
-
-### Stage 8 - Intelligence
-
-51. Advanced analytics
-52. Cost forecasting
-53. Schedule forecasting
-54. Procurement recommendations
-55. Labour optimization
-56. Risk detection
-57. Invoice/document extraction
-58. AI project assistant
-59. Project health score
-
-## Architecture rules
-
-The Flutter app uses a feature-first structure:
+### 4.1 Feature-first structure
 
 ```text
 lib/
@@ -280,234 +208,391 @@ lib/
     communication/
 ```
 
-Each feature should follow:
+Each feature should keep responsibilities separated:
 
 ```text
-presentation -> domain -> repository -> data
+Presentation -> Domain -> Repository contract -> Data implementation
 ```
 
-Keep UI, business rules, and data access separate. Reuse existing entities,
-repository interfaces, Riverpod providers, validation patterns, and domain
-services before introducing new abstractions.
+### 4.2 State management and dependency injection
 
-Do not introduce another dependency-injection framework. Riverpod remains the
-dependency-injection and state-management mechanism.
+Riverpod is the project's state-management and dependency-injection mechanism.
+Do not introduce another dependency-injection framework.
 
-## Backend deferral rule
+The normal flow for a feature is:
 
-The current repositories are intentionally mock/in-memory repositories. This
-is not throwaway architecture: repository interfaces and provider wiring allow
-remote implementations to replace mocks later.
+```text
+Page/widget
+  -> Riverpod query or action provider
+  -> Repository interface
+  -> Mock repository today
+  -> Remote/local implementation later
+```
 
-Until the feature roadmap reaches the production-infrastructure stage:
+### 4.3 Relationship conventions
 
-- Do not add API calls.
-- Do not create a backend service.
-- Do not add database persistence.
-- Do not add authentication or token handling.
-- Do not change mock repositories to remote repositories.
-- Do continue making entities and repository contracts realistic enough for
-  future persistence.
-- Do validate business behavior through domain and widget tests.
-- Design new features so they do not assume permanent internet connectivity.
-- Preserve the eventual offline-first direction:
+Use stable IDs for relationships:
 
-  ```text
-  Flutter UI -> Local database -> Sync engine -> Backend API -> PostgreSQL
-  ```
+- `projectId`
+- `phaseId`
+- `taskId`
+- `workerId`
 
-When backend work eventually begins, the expected direction is:
+Examples already used in the application:
+
+- Tasks use `assignedWorkerIds`.
+- Daily reports use `taskIds`.
+- Quality records can reference a project, phase, and optional task.
+
+---
+
+## 5. Backend and persistence boundary
+
+### 5.1 Current decision
+
+Backend integration is deliberately deferred. The current priority is to finish
+and validate frontend and domain features using realistic mock repositories.
+
+Do **not** add the following yet:
+
+- API calls
+- Backend services
+- PostgreSQL persistence
+- Authentication or token handling
+- Role-based access control
+- Offline database
+- Synchronization engine
+- Production deployment infrastructure
+
+This is a sequencing decision, not a rejection of the backend architecture.
+Repository interfaces and provider wiring are being kept realistic so data
+implementations can be replaced later without rewriting the UI.
+
+### 5.2 Target architecture
+
+The eventual offline-first direction is:
+
+```text
+Flutter UI -> Local database -> Sync engine -> Backend API -> PostgreSQL
+```
+
+The expected backend direction is:
 
 ```text
 Flutter -> API client -> FastAPI -> PostgreSQL
                          -> Redis/storage/integrations
 ```
 
-An offline database and synchronization layer may be added later.
+When backend work begins, it should be introduced behind the existing
+repository contracts rather than directly inside pages.
 
-## Development quality rules
+---
 
-- Build the feature completely through the UI, domain model, provider, and
-  mock repository before moving on.
-- Preserve project/phase relationships using stable IDs.
-- Add validation for dates, quantities, progress, and lifecycle transitions.
-- Keep business calculations in domain services rather than pages.
-- Add focused tests for each new business rule.
-- Handle loading, empty, error, retry, and refresh states.
-- Prefer small reusable widgets over continually growing page files.
-- Never silently lose data, overwrite unrelated records, create duplicate
-  financial records, accept invalid quantities/date ranges, or associate
-  records with nonexistent projects/phases.
-- Financial records should eventually be auditable and should not be treated
-  as ordinary destructively deletable records.
-- Do not implement future AI, finance, quality, logistics, or backend behavior
-  prematurely as placeholders unless the current feature explicitly needs a
-  contract for it.
-- Run `flutter analyze` and `flutter test` after coherent feature changes.
+## 6. Implementation roadmap
 
-## Immediate working position
+Features are implemented in sequence. Do not jump to backend work or unrelated
+infrastructure while the current feature stages are incomplete.
 
-The project has:
+### Stage 1 - Execution
+
+- [x] Task details
+- [x] Task execution updates
+- [x] Worker assignment
+- [x] Task-level labour tracking
+- [x] Task progress history
+- [x] Task links to daily site reports
+- [x] Planned versus actual execution
+
+### Stage 2 - Quality
+
+- [x] Inspections
+- [x] Defects
+- [x] Snag/punch lists
+- [x] Corrective actions
+- [ ] Reinspection
+- [ ] Quality history
+
+### Stage 3 - Materials and logistics
+
+- [ ] Delivery management
+- [ ] Inventory
+- [ ] Material receipt
+- [ ] Material consumption
+- [ ] Wastage
+- [ ] Material forecasting
+
+### Stage 4 - Finance
+
+- [ ] Supplier bills
+- [ ] Supplier payments
+- [ ] Client invoices and milestones
+- [ ] Client payments
+- [ ] Expenses
+- [ ] Ledger
+- [ ] Cash flow
+- [ ] Project profitability
+- [ ] Cost variance
+
+### Stage 5 - Planning
+
+- [ ] BOQ
+- [ ] Design management
+- [ ] Drawing revisions
+- [ ] Engineers and designers
+- [ ] Planned versus actual quantities
+
+### Stage 6 - Business operations
+
+- [ ] Client CRM
+- [ ] Supplier performance
+- [ ] Documents
+- [ ] Reminders
+- [ ] Notifications
+- [ ] Communication
+- [ ] WhatsApp integration planning
+- [ ] Phone CRM
+
+### Stage 7 - Production infrastructure
+
+- [ ] Authentication
+- [ ] Role-based access control
+- [ ] PostgreSQL backend
+- [ ] Offline database
+- [ ] Synchronization engine
+- [ ] Audit logs
+- [ ] Cloud storage
+- [ ] Backup and recovery
+- [ ] Production deployment
+
+### Stage 8 - Intelligence
+
+- [ ] Advanced analytics
+- [ ] Cost forecasting
+- [ ] Schedule forecasting
+- [ ] Procurement recommendations
+- [ ] Labour optimization
+- [ ] Risk detection
+- [ ] Invoice and document extraction
+- [ ] AI project assistant
+- [ ] Project health score
+
+---
+
+## 7. Completed implementation
+
+### Stage 1: Task details and execution updates
+
+- Dedicated task details route:
+  `/projects/:projectId/tasks/:taskId`
+- Tappable task cards from project task lists
+- Execution summary with status and progress
+- Planned and actual date display
+- Schedule variance and overdue display
+- Description and execution notes
+- Execution update dialog
+- Progress validation from 0 to 100
+- Completed-task validation requiring 100% progress
+- Actual end date validation
+- Completed-task handling when the actual end date is missing
+
+### Stage 1: Worker assignment
+
+- `ProjectTask.assignedWorkerIds` relationship field
+- Active worker list reused through existing providers
+- Assigned workers and roles shown on task details
+- Assign-workers dialog
+- Individual worker removal
+- Assignment preservation through create, edit, execution update, and archive
+- Sample task assignments
+
+### Stage 1: Task-level labour tracking
+
+- Task labour summary entity and calculator
+- Assigned-worker and attendance matching
+- Project, phase, and task date-window filtering
+- Base wage and overtime calculation
+- Attendance count, hours, overtime, and total cost display
+- Focused calculator tests
+
+### Stage 1: Task progress history
+
+- Progress update entity and repository abstraction
+- In-memory history repository with sample data
+- Riverpod history query and mutation providers
+- Newest-first progress timeline on task details
+- Automatic history entry after successful execution updates
+- Ordering and persistence tests
+
+### Stage 1: Daily site report connection
+
+- Daily reports support linked task IDs
+- Create and edit forms support task multi-selection
+- Existing task links are preserved during editing
+- Task details show linked reports
+- Report details resolve and display linked task names
+- Linked reports are sorted newest-first
+- Repository coverage for linked report data
+
+### Stage 1: Planned versus actual execution
+
+- Planned date range and inclusive planned duration
+- Actual date range and inclusive actual duration
+- On-schedule, early, late, and overdue states
+- Color-coded variance presentation
+- Domain calculator and focused tests
+- Completed tasks do not appear as in progress when the actual end date is
+  missing; they show `Actual end date missing`
+
+### Stage 2: Inspections
+
+- Project inspection entity with phase/task association
+- Results: passed, failed, and requires attention
+- Mock repository with newest-first ordering
+- Riverpod query and create action
+- Project inspections screen
+- Inspection form with inspector, phase, task, result, and notes
+- Project navigation entry and route
+
+### Stage 2: Defects
+
+- Defect entity with project, phase, optional task, location, description,
+  severity, status, and reported date
+- Severity: low, medium, high, and critical
+- Status: open, in progress, and resolved
+- Mock repository with newest-first ordering
+- Riverpod query, create, and update-status actions
+- Project defects screen and creation form
+- Inline status controls and project route
+
+### Stage 2: Snag/punch lists
+
+- Punch-list entity with phase/task association and location
+- Priority: low, medium, high, and critical
+- Status: open, in progress, and completed
+- Mock repository with newest-first ordering
+- Riverpod query, create, and update-status actions
+- Project snag/punch-list screen and creation form
+- Inline status controls and task context display
+
+### Stage 2: Corrective actions
+
+- Corrective-action entity with phase/task context
+- Due date and responsible-person fields
+- Priority: low, medium, high, and critical
+- Status: open, in progress, and completed
+- Mock repository with newest-first ordering
+- Riverpod query, create, and update-status actions
+- Project corrective-actions screen and creation form
+- Due-date and overdue display
+- Inline status controls and project route
+
+---
+
+## 8. Quality and engineering rules
+
+### Feature completion
+
+Before moving to the next feature, complete the full vertical slice:
+
+1. Domain entity and business rules
+2. Repository interface
+3. Mock repository implementation
+4. Riverpod query and mutation providers
+5. Project navigation and route
+6. UI for loading, empty, error, and success states
+7. Create/edit/update interactions where applicable
+8. Focused automated tests
+9. `flutter analyze`
+10. `flutter test`
+
+### Data integrity
+
+- Preserve project/phase/task relationships through stable IDs.
+- Validate dates, quantities, progress, and lifecycle transitions.
+- Keep calculations in domain services instead of pages.
+- Never silently discard records or overwrite unrelated records.
+- Prevent duplicate financial records.
+- Reject invalid quantities and date ranges.
+- Do not associate records with nonexistent projects or phases.
+- Treat financial records as auditable records; do not design them around
+  destructive deletion.
+
+### UI reliability
+
+Every data-driven screen should have intentional handling for:
+
+- Loading
+- Empty data
+- Error
+- Retry or refresh where relevant
+- Successful create/update feedback
+
+Prefer small reusable widgets over allowing page files to grow indefinitely.
+
+### Scope discipline
+
+Do not implement future AI, finance, logistics, backend, or synchronization
+behaviour as disconnected placeholders. Add only the contracts needed by the
+current feature.
+
+---
+
+## 9. Current working position
+
+The current implementation position is:
 
 ```text
 Project foundation
   -> Procurement foundation
-  -> Workforce foundation
+  -> Workforce and labour costing
   -> Daily site report foundation
-  -> Basic task lifecycle
-  -> NEXT: Task execution management
+  -> Task execution foundation
+  -> Quality management foundation
+  -> NEXT: Reinspection
 ```
 
-The next implementation work should therefore focus on Stage 1, starting with
-task details and execution updates, while keeping all data in the existing
-mock-repository architecture.
+The next planned feature is **reinspection**. It should build on inspections,
+defects, punch lists, and corrective actions by recording whether a corrective
+action or quality issue passes a follow-up check.
 
-### Completed Stage 1 slice: task details and execution update
+Before implementing reinspection, preserve the current decisions:
 
-Implemented in the current application:
+- Keep it project-scoped.
+- Support optional phase/task context.
+- Use a mock repository and Riverpod providers.
+- Do not introduce backend APIs or authentication.
+- Add focused repository/domain tests.
+- Keep the relationship between the original quality issue, corrective action,
+  and follow-up inspection explicit.
 
-- Dedicated task details route:
-  `/projects/:projectId/tasks/:taskId`
-- Tappable task cards from the project task list
-- Task execution summary with progress and status
-- Planned and actual date display
-- Schedule variance display:
-  on schedule, early, late, or overdue
-- Description and execution-notes display
-- Execution update dialog for:
-  status
-  actual start date
-  actual end date
-  progress
-  execution notes
-- Validation that progress stays within 0-100
-- Validation that completed tasks are at 100%
-- Validation that actual end is not before actual start
+Open design questions for the quality stage:
 
-The next Stage 1 slice is worker assignment to tasks. That should introduce
-task-worker relationships without adding backend integration or bypassing the
-existing repository/provider architecture.
+- Should a corrective action be linked to a defect, punch-list item, or both?
+- Should completion require a completion date and completion notes?
+- Should reinspection be required before a defect or punch item can be closed?
+- Should quality history be shown directly on task details?
 
-### Completed Stage 1 slice: worker assignment to tasks
+Resolve these questions when the relevant feature is implemented, not by adding
+unrelated infrastructure now.
 
-Implemented in the current application:
+---
 
-- `ProjectTask.assignedWorkerIds` relationship field
-- Existing active worker list reused through `workersProvider`
-- Assigned workers shown on the task details page
-- Worker role labels shown with each assignment
-- Assign-workers dialog with active-worker selection
-- Individual worker removal
-- Assignment preservation through task creation, editing, execution updates,
-  and archive operations
-- Sample excavation task seeded with two worker assignments
+## 10. Definition of done
 
-The next Stage 1 slice is task-level labour tracking. It should build on these
-worker assignments and existing attendance/labour-cost calculations without
-adding backend integration.
+A feature is complete when:
 
-### Completed Stage 1 slice: task-level labour tracking
+- Its domain model represents the required business data.
+- Its repository contract can later support a real data source.
+- Its mock repository supports realistic create/read/update behaviour.
+- Its Riverpod providers expose queries and mutations cleanly.
+- Its UI is reachable from the appropriate project screen.
+- Its loading, empty, error, and success states are handled.
+- Invalid input is rejected visibly.
+- Focused tests cover the important business rules.
+- `flutter analyze` passes.
+- `flutter test` passes.
+- This document is updated with the completed slice and the next intended
+  feature.
 
-Implemented in the current application:
-
-- Task labour summary domain entity and calculator
-- Labour summary provider using assigned workers and attendance records
-- Task date-window filtering with project and phase matching
-- Base wage and overtime cost calculation using existing workforce rules
-- Task details labour section showing attendance count, hours, overtime, and
-  total labour cost
-- Focused calculator tests for assigned-worker matching and cost calculation
-- Mock attendance aligned with the sample excavation task window
-
-The next Stage 1 slice is task progress history.
-
-### Completed Stage 1 slice: task progress history
-
-Implemented in the current application:
-
-- Task progress update entity and repository abstraction
-- In-memory progress history repository with sample task history
-- Riverpod history query and mutation providers
-- Progress history timeline on task details
-- Automatic history record creation after each successful execution update
-- Newest-first history ordering with timestamp, status, progress, and notes
-- Repository tests for ordering and persistence
-
-The next Stage 1 slice is connecting tasks with daily site reports.
-
-### Completed Stage 1 slice: task and daily site report connection
-
-Implemented in the current application:
-
-- Daily site reports now support linked task IDs
-- Daily report form can link one or more active project tasks
-- Existing task links are preserved while editing reports
-- Task details show linked daily site reports with date and completed work
-- Linked reports are sorted newest-first
-- Mock reports include links to the sample excavation task
-- Repository coverage verifies linked report data
-
-### Completed Stage 1 slice: planned versus actual execution
-
-Implemented in the current application:
-
-- Dedicated planned-versus-actual execution section on task details
-- Planned date range and inclusive planned duration
-- Actual date range and inclusive actual duration when execution is complete
-- Schedule variance labels for on-schedule, early, and late completion
-- Overdue detection for incomplete tasks past their planned end date
-- Color-coded variance presentation for quick schedule-risk recognition
-- Domain calculator and focused tests for duration and variance rules
-
-Stage 1 execution foundations are now complete. The next implementation work
-should move to Stage 2 quality management, starting with inspections.
-
-### Completed Stage 2 slice: inspections
-
-Implemented in the current application:
-
-- Project inspection entity with phase/task association
-- Inspection result states: passed, failed, and requires attention
-- Mock inspection repository with newest-first ordering
-- Riverpod query and create-action providers
-- Project inspections screen with task context and notes
-- Inspection creation form with inspector, phase, task, result, and notes
-- Project navigation entry and route for inspections
-
-### Completed Stage 2 slice: defects
-
-Implemented in the current application:
-
-- Defect entity with project, phase, optional task, location, description,
-  severity, status, and reported date
-- Severity levels: low, medium, high, and critical
-- Defect statuses: open, in progress, and resolved
-- Mock defect repository with newest-first ordering
-- Riverpod query, create, and update-status actions
-- Project defects screen with task context and status controls
-- Defect creation form and project navigation route
-
-### Completed Stage 2 slice: snag/punch lists
-
-Implemented in the current application:
-
-- Punch-list item entity with phase/task association and location
-- Priority levels: low, medium, high, and critical
-- Item statuses: open, in progress, and completed
-- Mock punch-list repository with newest-first ordering
-- Riverpod query, create, and status-update actions
-- Project snag/punch-list screen and creation form
-- Inline status updates and task context display
-
-### Completed Stage 2 slice: corrective actions
-
-Implemented in the current application:
-
-- Corrective-action entity with phase/task context, due date, and responsible person
-- Priority levels: low, medium, high, and critical
-- Action statuses: open, in progress, and completed
-- Mock corrective-action repository with newest-first ordering
-- Riverpod query, create, and update-status actions
-- Project corrective-actions screen and creation form
-- Due-date and overdue display with inline status updates
-- Project navigation entry and route for corrective actions
+The backend phase begins only after the planned feature roadmap is substantially
+complete and the project has a stable set of domain contracts to persist.

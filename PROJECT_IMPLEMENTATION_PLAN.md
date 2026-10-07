@@ -498,3 +498,16 @@ Implemented in the current application:
 - Riverpod query, create, and status-update actions
 - Project snag/punch-list screen and creation form
 - Inline status updates and task context display
+
+### Completed Stage 2 slice: corrective actions
+
+Implemented in the current application:
+
+- Corrective-action entity with phase/task context, due date, and responsible person
+- Priority levels: low, medium, high, and critical
+- Action statuses: open, in progress, and completed
+- Mock corrective-action repository with newest-first ordering
+- Riverpod query, create, and update-status actions
+- Project corrective-actions screen and creation form
+- Due-date and overdue display with inline status updates
+- Project navigation entry and route for corrective actions

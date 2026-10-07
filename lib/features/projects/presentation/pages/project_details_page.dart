@@ -173,6 +173,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.build_circle_outlined,
+            title: 'Corrective Actions',
+            subtitle: 'Assign, prioritize and close quality actions',
+            onTap: () {
+              context.push('/projects/${project.id}/corrective-actions');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.task_alt_outlined,
             title: 'Tasks',
             subtitle: 'Plan and track project work',

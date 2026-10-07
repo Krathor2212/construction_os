@@ -18,14 +18,12 @@ import '../features/materials/presentation/pages/material_requirements_page.dart
 import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 import '../features/tasks/presentation/pages/project_tasks_page.dart';
+import '../features/tasks/presentation/pages/project_task_details_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const DashboardPage(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
     GoRoute(
       path: '/projects',
       builder: (context, state) => const ProjectsPage(),
@@ -34,51 +32,38 @@ final GoRouter appRouter = GoRouter(
       path: '/projects/:projectId',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return ProjectDetailsPage(
-          projectId: projectId,
-        );
+        return ProjectDetailsPage(projectId: projectId);
       },
     ),
     GoRoute(
       path: '/projects/:projectId/timeline',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return ProjectTimelinePage(
-          projectId: projectId,
-        );
+        return ProjectTimelinePage(projectId: projectId);
       },
     ),
     GoRoute(
       path: '/projects/:projectId/contacts',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return ProjectContactsPage(
-          projectId: projectId,
-        );
+        return ProjectContactsPage(projectId: projectId);
       },
     ),
     GoRoute(
       path: '/projects/:projectId/quotations',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return ProjectQuotationsPage(
-          projectId: projectId,
-        );
+        return ProjectQuotationsPage(projectId: projectId);
       },
     ),
     GoRoute(
       path: '/projects/:projectId/daily-site-reports',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return DailySiteReportsPage(
-          projectId: projectId,
-        );
+        return DailySiteReportsPage(projectId: projectId);
       },
     ),
-    GoRoute(
-      path: '/workers',
-      builder: (context, state) => const WorkersPage(),
-    ),
+    GoRoute(path: '/workers', builder: (context, state) => const WorkersPage()),
     GoRoute(
       path: '/materials',
       builder: (context, state) => const MaterialsPage(),
@@ -91,9 +76,7 @@ final GoRouter appRouter = GoRouter(
       path: '/projects/:projectId/purchase-quotations',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return PurchaseQuotationsPage(
-          projectId: projectId,
-        );
+        return PurchaseQuotationsPage(projectId: projectId);
       },
     ),
     GoRoute(
@@ -109,9 +92,7 @@ final GoRouter appRouter = GoRouter(
       path: '/projects/:projectId/purchase-orders',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return PurchaseOrdersPage(
-          projectId: projectId,
-        );
+        return PurchaseOrdersPage(projectId: projectId);
       },
     ),
     GoRoute(
@@ -127,34 +108,33 @@ final GoRouter appRouter = GoRouter(
       path: '/projects/:projectId/material-requirements',
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
-        return MaterialRequirementsPage(
-          projectId: projectId,
-        );
+        return MaterialRequirementsPage(projectId: projectId);
       },
     ),
     GoRoute(
       path: '/workers/:workerId/attendance',
       builder: (context, state) {
         final workerId = state.pathParameters['workerId']!;
-        final workerName =
-            state.uri.queryParameters['workerName'] ?? 'Worker';
+        final workerName = state.uri.queryParameters['workerName'] ?? 'Worker';
 
-        return WorkerAttendancePage(
-          workerId: workerId,
-          workerName: workerName,
-        );
+        return WorkerAttendancePage(workerId: workerId, workerName: workerName);
       },
     ),
     GoRoute(
       path: '/workers/:workerId/allocations',
       builder: (context, state) {
         final workerId = state.pathParameters['workerId']!;
-        final workerName =
-            state.uri.queryParameters['workerName'] ?? 'Worker';
+        final workerName = state.uri.queryParameters['workerName'] ?? 'Worker';
 
-        return WorkerAllocationPage(
-          workerId: workerId,
-          workerName: workerName,
+        return WorkerAllocationPage(workerId: workerId, workerName: workerName);
+      },
+    ),
+    GoRoute(
+      path: '/projects/:projectId/tasks/:taskId',
+      builder: (context, state) {
+        return ProjectTaskDetailsPage(
+          projectId: state.pathParameters['projectId']!,
+          taskId: state.pathParameters['taskId']!,
         );
       },
     ),
@@ -163,9 +143,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) {
         final projectId = state.pathParameters['projectId']!;
 
-        return ProjectTasksPage(
-          projectId: projectId,
-        );
+        return ProjectTasksPage(projectId: projectId);
       },
     ),
   ],

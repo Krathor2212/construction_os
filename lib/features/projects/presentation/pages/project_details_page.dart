@@ -157,6 +157,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.report_problem_outlined,
+            title: 'Defects',
+            subtitle: 'Track quality issues and resolution status',
+            onTap: () {
+              context.push('/projects/${project.id}/defects');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.task_alt_outlined,
             title: 'Tasks',
             subtitle: 'Plan and track project work',

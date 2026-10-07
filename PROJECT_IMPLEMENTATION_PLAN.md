@@ -473,3 +473,16 @@ Implemented in the current application:
 - Project inspections screen with task context and notes
 - Inspection creation form with inspector, phase, task, result, and notes
 - Project navigation entry and route for inspections
+
+### Completed Stage 2 slice: defects
+
+Implemented in the current application:
+
+- Defect entity with project, phase, optional task, location, description,
+  severity, status, and reported date
+- Severity levels: low, medium, high, and critical
+- Defect statuses: open, in progress, and resolved
+- Mock defect repository with newest-first ordering
+- Riverpod query, create, and update-status actions
+- Project defects screen with task context and status controls
+- Defect creation form and project navigation route

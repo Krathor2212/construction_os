@@ -65,7 +65,7 @@ profitability.
 | Workforce and labour costing | Strong foundation |
 | Daily site operations | Foundation |
 | Tasks and execution | Core execution slices implemented |
-| Quality management | Inspections, defects, punch lists, corrective actions, and reinspections implemented |
+| Quality management | Full quality workflow implemented through unified quality history |
 | Finance | Pending |
 | Logistics and inventory | Pending |
 | Planning, BOQ, and design | Pending |
@@ -76,7 +76,7 @@ profitability.
 ### Validation baseline
 
 - Flutter static analysis: passing
-- Automated test suite: **38 tests passing**
+- Automated test suite: **40 tests passing**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
 - Backend API: not yet integrated
@@ -310,7 +310,7 @@ infrastructure while the current feature stages are incomplete.
 - [x] Snag/punch lists
 - [x] Corrective actions
 - [x] Reinspection
-- [ ] Quality history
+- [x] Quality history
 
 ### Stage 3 - Materials and logistics
 
@@ -497,6 +497,17 @@ infrastructure while the current feature stages are incomplete.
 - Corrective-action selection when recording a follow-up inspection
 - Project navigation entry and route
 
+### Stage 2: Quality history
+
+- Unified quality-history entry entity and type classification
+- Project-level aggregation of inspections, defects, punch lists, corrective
+  actions, and reinspections
+- Newest-first chronological ordering
+- Human-readable status and summary mapping for each quality record
+- Riverpod project history provider
+- Project quality-history screen and navigation route
+- Repository coverage for aggregation, ordering, and project filtering
+
 ---
 
 ## 8. Quality and engineering rules
@@ -559,12 +570,12 @@ Project foundation
   -> Daily site report foundation
   -> Task execution foundation
   -> Quality management foundation
-  -> NEXT: Quality history
+  -> NEXT: Delivery management
 ```
 
-The next planned feature is **quality history**. It should provide a
-project-level chronological view across inspections, defects, punch lists,
-corrective actions, and reinspections.
+The quality stage is now complete for the current roadmap scope. The next
+planned feature is **delivery management**, beginning Stage 3 with inbound
+material deliveries linked to project requirements and procurement records.
 
 Before implementing reinspection, preserve the current decisions:
 

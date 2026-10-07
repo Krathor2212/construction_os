@@ -189,6 +189,14 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.history_outlined,
+            title: 'Quality History',
+            subtitle: 'Review the complete project quality timeline',
+            onTap: () {
+              context.push('/projects/${project.id}/quality-history');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.task_alt_outlined,
             title: 'Tasks',
             subtitle: 'Plan and track project work',

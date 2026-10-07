@@ -24,6 +24,7 @@ import '../features/quality/presentation/pages/project_defects_page.dart';
 import '../features/quality/presentation/pages/project_punch_list_page.dart';
 import '../features/quality/presentation/pages/project_corrective_actions_page.dart';
 import '../features/quality/presentation/pages/project_reinspections_page.dart';
+import '../features/quality/presentation/pages/project_quality_history_page.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -80,9 +81,8 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/projects/:projectId/punch-list',
-      builder: (context, state) => ProjectPunchListPage(
-        projectId: state.pathParameters['projectId']!,
-      ),
+      builder: (context, state) =>
+          ProjectPunchListPage(projectId: state.pathParameters['projectId']!),
     ),
     GoRoute(
       path: '/projects/:projectId/corrective-actions',
@@ -93,6 +93,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/projects/:projectId/reinspections',
       builder: (context, state) => ProjectReinspectionsPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/quality-history',
+      builder: (context, state) => ProjectQualityHistoryPage(
         projectId: state.pathParameters['projectId']!,
       ),
     ),

@@ -17,6 +17,7 @@ class MockProjectTaskRepository implements ProjectTaskRepository {
             priority: ProjectTaskPriority.high,
             progress: 45,
             notes: 'Excavation progressing as planned.',
+            assignedWorkerIds: ['worker-001', 'worker-002'],
           ),
           ProjectTask(
             id: 'task-002',

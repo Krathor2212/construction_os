@@ -104,6 +104,7 @@ class ProjectTaskActions {
       priority: task.priority,
       progress: task.progress,
       notes: task.notes,
+      assignedWorkerIds: task.assignedWorkerIds,
       isArchived: true,
     );
 

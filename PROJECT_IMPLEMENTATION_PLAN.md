@@ -387,3 +387,21 @@ Implemented in the current application:
 The next Stage 1 slice is worker assignment to tasks. That should introduce
 task-worker relationships without adding backend integration or bypassing the
 existing repository/provider architecture.
+
+### Completed Stage 1 slice: worker assignment to tasks
+
+Implemented in the current application:
+
+- `ProjectTask.assignedWorkerIds` relationship field
+- Existing active worker list reused through `workersProvider`
+- Assigned workers shown on the task details page
+- Worker role labels shown with each assignment
+- Assign-workers dialog with active-worker selection
+- Individual worker removal
+- Assignment preservation through task creation, editing, execution updates,
+  and archive operations
+- Sample excavation task seeded with two worker assignments
+
+The next Stage 1 slice is task-level labour tracking. It should build on these
+worker assignments and existing attendance/labour-cost calculations without
+adding backend integration.

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
 import '../../../projects/presentation/providers/project_providers.dart';
 import '../../domain/entities/project_task.dart';
 
 class ProjectTaskFormDialog extends ConsumerStatefulWidget {
-  const ProjectTaskFormDialog({
-    super.key,
-    required this.projectId,
-    this.task,
-  });
+  const ProjectTaskFormDialog({super.key, required this.projectId, this.task});
 
   final String projectId;
   final ProjectTask? task;
@@ -20,8 +15,7 @@ class ProjectTaskFormDialog extends ConsumerStatefulWidget {
       _ProjectTaskFormDialogState();
 }
 
-class _ProjectTaskFormDialogState
-    extends ConsumerState<ProjectTaskFormDialog> {
+class _ProjectTaskFormDialogState extends ConsumerState<ProjectTaskFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -42,9 +36,7 @@ class _ProjectTaskFormDialogState
 
     final task = widget.task;
 
-    _nameController = TextEditingController(
-      text: task?.name ?? '',
-    );
+    _nameController = TextEditingController(text: task?.name ?? '');
 
     _descriptionController = TextEditingController(
       text: task?.description ?? '',
@@ -54,26 +46,18 @@ class _ProjectTaskFormDialogState
       text: (task?.progress ?? 0).toStringAsFixed(0),
     );
 
-    _notesController = TextEditingController(
-      text: task?.notes ?? '',
-    );
+    _notesController = TextEditingController(text: task?.notes ?? '');
 
-    _plannedStartDate =
-        task?.plannedStartDate ?? DateTime.now();
+    _plannedStartDate = task?.plannedStartDate ?? DateTime.now();
 
     _plannedEndDate =
-        task?.plannedEndDate ??
-        DateTime.now().add(
-          const Duration(days: 1),
-        );
+        task?.plannedEndDate ?? DateTime.now().add(const Duration(days: 1));
 
     _phaseId = task?.phaseId;
 
-    _status =
-        task?.status ?? ProjectTaskStatus.notStarted;
+    _status = task?.status ?? ProjectTaskStatus.notStarted;
 
-    _priority =
-        task?.priority ?? ProjectTaskPriority.medium;
+    _priority = task?.priority ?? ProjectTaskPriority.medium;
   }
 
   @override
@@ -87,16 +71,10 @@ class _ProjectTaskFormDialogState
 
   @override
   Widget build(BuildContext context) {
-    final phasesAsync = ref.watch(
-      projectPhasesProvider(widget.projectId),
-    );
+    final phasesAsync = ref.watch(projectPhasesProvider(widget.projectId));
 
     return AlertDialog(
-      title: Text(
-        widget.task == null
-            ? 'Add Task'
-            : 'Edit Task',
-      ),
+      title: Text(widget.task == null ? 'Add Task' : 'Edit Task'),
       content: SizedBox(
         width: 560,
         child: SingleChildScrollView(
@@ -113,8 +91,7 @@ class _ProjectTaskFormDialogState
                     hintText: 'e.g. Foundation excavation',
                   ),
                   validator: (value) {
-                    if (value == null ||
-                        value.trim().isEmpty) {
+                    if (value == null || value.trim().isEmpty) {
                       return 'Enter a task name.';
                     }
 
@@ -127,8 +104,7 @@ class _ProjectTaskFormDialogState
                   maxLines: 3,
                   decoration: const InputDecoration(
                     labelText: 'Description',
-                    hintText:
-                        'Describe the work to be completed.',
+                    hintText: 'Describe the work to be completed.',
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -136,67 +112,50 @@ class _ProjectTaskFormDialogState
                   loading: () => const Align(
                     alignment: Alignment.centerLeft,
                     child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        vertical: 12,
-                      ),
+                      padding: EdgeInsets.symmetric(vertical: 12),
                       child: CircularProgressIndicator(),
                     ),
                   ),
-                  error: (error, stackTrace) =>
-                      Align(
+                  error: (error, stackTrace) => Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Unable to load phases.',
                       style: TextStyle(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .error,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
                   ),
                   data: (phases) {
                     final activePhases = phases
-                        .where(
-                          (phase) =>
-                              !phase.isArchived,
-                        )
+                        .where((phase) => !phase.isArchived)
                         .toList();
 
                     if (_phaseId != null &&
-                        !activePhases.any(
-                          (phase) =>
-                              phase.id == _phaseId,
-                        )) {
+                        !activePhases.any((phase) => phase.id == _phaseId)) {
                       _phaseId = null;
                     }
 
                     return DropdownButtonFormField<String>(
                       initialValue: _phaseId,
                       isExpanded: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Phase',
-                      ),
-                      items: activePhases.map(
-                        (phase) {
-                          return DropdownMenuItem<String>(
-                            value: phase.id,
-                            child: Text(
-                              phase.name,
-                              maxLines: 1,
-                              overflow:
-                                  TextOverflow.ellipsis,
-                            ),
-                          );
-                        },
-                      ).toList(),
+                      decoration: const InputDecoration(labelText: 'Phase'),
+                      items: activePhases.map((phase) {
+                        return DropdownMenuItem<String>(
+                          value: phase.id,
+                          child: Text(
+                            phase.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
                       onChanged: (value) {
                         setState(() {
                           _phaseId = value;
                         });
                       },
                       validator: (value) {
-                        if (value == null ||
-                            value.isEmpty) {
+                        if (value == null || value.isEmpty) {
                           return 'Select a phase.';
                         }
 
@@ -212,19 +171,14 @@ class _ProjectTaskFormDialogState
                       child: _DateField(
                         label: 'Planned Start',
                         date: _plannedStartDate,
-                        onTap: () =>
-                            _selectDate(
-                          initialDate:
-                              _plannedStartDate,
+                        onTap: () => _selectDate(
+                          initialDate: _plannedStartDate,
                           onSelected: (date) {
                             setState(() {
-                              _plannedStartDate =
-                                  date;
+                              _plannedStartDate = date;
 
-                              if (_plannedEndDate
-                                  .isBefore(date)) {
-                                _plannedEndDate =
-                                    date;
+                              if (_plannedEndDate.isBefore(date)) {
+                                _plannedEndDate = date;
                               }
                             });
                           },
@@ -236,16 +190,12 @@ class _ProjectTaskFormDialogState
                       child: _DateField(
                         label: 'Planned End',
                         date: _plannedEndDate,
-                        onTap: () =>
-                            _selectDate(
-                          initialDate:
-                              _plannedEndDate,
-                          firstDate:
-                              _plannedStartDate,
+                        onTap: () => _selectDate(
+                          initialDate: _plannedEndDate,
+                          firstDate: _plannedStartDate,
                           onSelected: (date) {
                             setState(() {
-                              _plannedEndDate =
-                                  date;
+                              _plannedEndDate = date;
                             });
                           },
                         ),
@@ -257,18 +207,12 @@ class _ProjectTaskFormDialogState
                 DropdownButtonFormField<ProjectTaskStatus>(
                   initialValue: _status,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Status',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Status'),
                   items: ProjectTaskStatus.values
                       .map(
-                        (status) =>
-                            DropdownMenuItem<
-                                ProjectTaskStatus>(
+                        (status) => DropdownMenuItem<ProjectTaskStatus>(
                           value: status,
-                          child: Text(
-                            _statusLabel(status),
-                          ),
+                          child: Text(_statusLabel(status)),
                         ),
                       )
                       .toList(),
@@ -280,10 +224,8 @@ class _ProjectTaskFormDialogState
                     setState(() {
                       _status = value;
 
-                      if (_status ==
-                          ProjectTaskStatus.completed) {
-                        _progressController.text =
-                            '100';
+                      if (_status == ProjectTaskStatus.completed) {
+                        _progressController.text = '100';
                       }
                     });
                   },
@@ -292,18 +234,12 @@ class _ProjectTaskFormDialogState
                 DropdownButtonFormField<ProjectTaskPriority>(
                   initialValue: _priority,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Priority',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Priority'),
                   items: ProjectTaskPriority.values
                       .map(
-                        (priority) =>
-                            DropdownMenuItem<
-                                ProjectTaskPriority>(
+                        (priority) => DropdownMenuItem<ProjectTaskPriority>(
                           value: priority,
-                          child: Text(
-                            _priorityLabel(priority),
-                          ),
+                          child: Text(_priorityLabel(priority)),
                         ),
                       )
                       .toList(),
@@ -320,8 +256,7 @@ class _ProjectTaskFormDialogState
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _progressController,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(
+                  keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
                   ),
                   decoration: const InputDecoration(
@@ -329,22 +264,17 @@ class _ProjectTaskFormDialogState
                     hintText: '0 - 100',
                   ),
                   validator: (value) {
-                    final progress =
-                        double.tryParse(
-                      value?.trim() ?? '',
-                    );
+                    final progress = double.tryParse(value?.trim() ?? '');
 
                     if (progress == null) {
                       return 'Enter a valid percentage.';
                     }
 
-                    if (progress < 0 ||
-                        progress > 100) {
+                    if (progress < 0 || progress > 100) {
                       return 'Progress must be between 0 and 100.';
                     }
 
-                    if (_status ==
-                            ProjectTaskStatus.completed &&
+                    if (_status == ProjectTaskStatus.completed &&
                         progress != 100) {
                       return 'Completed tasks must be at 100%.';
                     }
@@ -356,9 +286,7 @@ class _ProjectTaskFormDialogState
                 TextFormField(
                   controller: _notesController,
                   maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Notes'),
                 ),
               ],
             ),
@@ -374,11 +302,7 @@ class _ProjectTaskFormDialogState
         ),
         FilledButton(
           onPressed: _submit,
-          child: Text(
-            widget.task == null
-                ? 'Add Task'
-                : 'Save Changes',
-          ),
+          child: Text(widget.task == null ? 'Add Task' : 'Save Changes'),
         ),
       ],
     );
@@ -408,17 +332,14 @@ class _ProjectTaskFormDialogState
       return;
     }
 
-    final progress = double.parse(
-      _progressController.text.trim(),
-    );
+    final progress = double.parse(_progressController.text.trim());
 
     final task = ProjectTask(
       id: widget.task?.id ?? '',
       projectId: widget.projectId,
       phaseId: _phaseId!,
       name: _nameController.text.trim(),
-      description:
-          _emptyToNull(_descriptionController.text),
+      description: _emptyToNull(_descriptionController.text),
       plannedStartDate: _plannedStartDate,
       plannedEndDate: _plannedEndDate,
       actualStartDate: widget.task?.actualStartDate,
@@ -427,6 +348,7 @@ class _ProjectTaskFormDialogState
       priority: _priority,
       progress: progress,
       notes: _emptyToNull(_notesController.text),
+      assignedWorkerIds: widget.task?.assignedWorkerIds ?? const [],
       isArchived: widget.task?.isArchived ?? false,
     );
 
@@ -454,9 +376,7 @@ class _ProjectTaskFormDialogState
     }
   }
 
-  String _priorityLabel(
-    ProjectTaskPriority priority,
-  ) {
+  String _priorityLabel(ProjectTaskPriority priority) {
     switch (priority) {
       case ProjectTaskPriority.low:
         return 'Low';
@@ -489,9 +409,7 @@ class _DateField extends StatelessWidget {
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,
-          suffixIcon: const Icon(
-            Icons.calendar_today_outlined,
-          ),
+          suffixIcon: const Icon(Icons.calendar_today_outlined),
         ),
         child: Text(
           '${date.day.toString().padLeft(2, '0')}/'

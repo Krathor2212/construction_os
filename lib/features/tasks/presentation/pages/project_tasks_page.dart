@@ -46,6 +46,7 @@ class ProjectTasksPage extends ConsumerWidget {
             priority: task.priority,
             progress: task.progress,
             notes: task.notes,
+            assignedWorkerIds: task.assignedWorkerIds,
             isArchived: task.isArchived,
           );
 

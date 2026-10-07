@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_spacing.dart';
 import '../../../projects/presentation/providers/project_providers.dart';
+import '../../../workforce/domain/entities/worker.dart';
+import '../../../workforce/presentation/providers/worker_providers.dart';
 import '../../domain/entities/project_task.dart';
 import '../providers/project_task_providers.dart';
 import '../widgets/project_task_form_dialog.dart';
@@ -159,6 +161,8 @@ class _TaskDetailsContent extends ConsumerWidget {
                 child: Text(task.notes!),
               ),
             ],
+            const SizedBox(height: AppSpacing.md),
+            _TaskWorkersSection(task: task),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(
               onPressed: () => _updateExecution(context, ref, task),
@@ -170,70 +174,262 @@ class _TaskDetailsContent extends ConsumerWidget {
       },
     );
   }
+}
 
-  Future<void> _updateExecution(
+class _TaskWorkersSection extends ConsumerWidget {
+  const _TaskWorkersSection({required this.task});
+
+  final ProjectTask task;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workersAsync = ref.watch(workersProvider);
+
+    return _TaskSection(
+      title: 'Assigned workers',
+      icon: Icons.groups_outlined,
+      child: workersAsync.when(
+        loading: () => const LinearProgressIndicator(),
+        error: (error, _) => Text(
+          'Unable to load workers: $error',
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+        data: (workers) {
+          final assignedWorkers = workers
+              .where((worker) => task.assignedWorkerIds.contains(worker.id))
+              .toList();
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (assignedWorkers.isEmpty)
+                const Text('No workers assigned yet.')
+              else
+                ...assignedWorkers.map(
+                  (worker) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const CircleAvatar(
+                      child: Icon(Icons.person_outline),
+                    ),
+                    title: Text(worker.name),
+                    subtitle: Text(_workerRoleLabel(worker.role)),
+                    trailing: IconButton(
+                      tooltip: 'Remove worker',
+                      icon: const Icon(Icons.remove_circle_outline),
+                      onPressed: () => _saveWorkers(
+                        context,
+                        ref,
+                        task,
+                        task.assignedWorkerIds
+                            .where((id) => id != worker.id)
+                            .toList(),
+                      ),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: AppSpacing.xs),
+              OutlinedButton.icon(
+                onPressed: () => _assignWorkers(context, ref, workers),
+                icon: const Icon(Icons.person_add_alt_1),
+                label: const Text('Assign workers'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _assignWorkers(
     BuildContext context,
     WidgetRef ref,
-    ProjectTask task,
+    List<Worker> workers,
   ) async {
-    final updatedTask = await showDialog<ProjectTask>(
+    final selectedIds = await showDialog<List<String>>(
       context: context,
-      builder: (_) => _ExecutionUpdateDialog(task: task),
+      builder: (_) => _AssignWorkersDialog(
+        workers: workers,
+        selectedWorkerIds: task.assignedWorkerIds,
+      ),
     );
 
-    if (updatedTask == null || !context.mounted) {
+    if (selectedIds == null || !context.mounted) {
       return;
     }
 
-    await ref.read(projectTaskActionsProvider).updateTask(updatedTask);
+    await _saveWorkers(context, ref, task, selectedIds);
+  }
+
+  Future<void> _saveWorkers(
+    BuildContext context,
+    WidgetRef ref,
+    ProjectTask task,
+    List<String> workerIds,
+  ) async {
+    await ref
+        .read(projectTaskActionsProvider)
+        .updateTask(
+          ProjectTask(
+            id: task.id,
+            projectId: task.projectId,
+            phaseId: task.phaseId,
+            name: task.name,
+            description: task.description,
+            plannedStartDate: task.plannedStartDate,
+            plannedEndDate: task.plannedEndDate,
+            actualStartDate: task.actualStartDate,
+            actualEndDate: task.actualEndDate,
+            status: task.status,
+            priority: task.priority,
+            progress: task.progress,
+            notes: task.notes,
+            assignedWorkerIds: workerIds,
+            isArchived: task.isArchived,
+          ),
+        );
 
     if (!context.mounted) {
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Execution updated successfully.')),
+      const SnackBar(content: Text('Task workers updated successfully.')),
     );
   }
+}
 
-  String _actualDateRange(ProjectTask task) {
-    if (task.actualStartDate == null && task.actualEndDate == null) {
-      return 'Not started';
-    }
+class _AssignWorkersDialog extends StatefulWidget {
+  const _AssignWorkersDialog({
+    required this.workers,
+    required this.selectedWorkerIds,
+  });
 
-    final start = task.actualStartDate == null
-        ? 'Not recorded'
-        : _formatDate(task.actualStartDate!);
-    final end = task.actualEndDate == null
-        ? 'In progress'
-        : _formatDate(task.actualEndDate!);
+  final List<Worker> workers;
+  final List<String> selectedWorkerIds;
 
-    return '$start - $end';
+  @override
+  State<_AssignWorkersDialog> createState() => _AssignWorkersDialogState();
+}
+
+class _AssignWorkersDialogState extends State<_AssignWorkersDialog> {
+  late final Set<String> _selectedWorkerIds;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedWorkerIds = widget.selectedWorkerIds.toSet();
   }
 
-  String _scheduleVariance(ProjectTask task) {
-    if (task.actualEndDate == null) {
-      final today = DateTime.now();
-      if (today.isAfter(task.plannedEndDate) && task.progress < 100) {
-        return 'Overdue by ${_dayDifference(task.plannedEndDate, today)} '
-            'day${_dayDifference(task.plannedEndDate, today) == 1 ? '' : 's'}';
-      }
-      return 'Not available yet';
-    }
+  @override
+  Widget build(BuildContext context) {
+    final activeWorkers = widget.workers
+        .where((worker) => worker.isActive)
+        .toList();
 
-    final variance = task.actualEndDate!.difference(task.plannedEndDate).inDays;
-    if (variance == 0) {
-      return 'On schedule';
-    }
-    if (variance > 0) {
-      return '$variance day${variance == 1 ? '' : 's'} late';
-    }
-    return '${variance.abs()} day${variance.abs() == 1 ? '' : 's'} early';
+    return AlertDialog(
+      title: const Text('Assign workers'),
+      content: SizedBox(
+        width: 480,
+        child: activeWorkers.isEmpty
+            ? const Text('No active workers are available.')
+            : SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: activeWorkers
+                      .map(
+                        (worker) => CheckboxListTile(
+                          value: _selectedWorkerIds.contains(worker.id),
+                          title: Text(worker.name),
+                          subtitle: Text(_workerRoleLabel(worker.role)),
+                          secondary: const Icon(Icons.person_outline),
+                          onChanged: (selected) {
+                            setState(() {
+                              if (selected == true) {
+                                _selectedWorkerIds.add(worker.id);
+                              } else {
+                                _selectedWorkerIds.remove(worker.id);
+                              }
+                            });
+                          },
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () =>
+              Navigator.of(context).pop(_selectedWorkerIds.toList()),
+          child: const Text('Save'),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _updateExecution(
+  BuildContext context,
+  WidgetRef ref,
+  ProjectTask task,
+) async {
+  final updatedTask = await showDialog<ProjectTask>(
+    context: context,
+    builder: (_) => _ExecutionUpdateDialog(task: task),
+  );
+
+  if (updatedTask == null || !context.mounted) {
+    return;
   }
 
-  int _dayDifference(DateTime start, DateTime end) {
-    return end.difference(start).inDays;
+  await ref.read(projectTaskActionsProvider).updateTask(updatedTask);
+
+  if (!context.mounted) {
+    return;
   }
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Execution updated successfully.')),
+  );
+}
+
+String _actualDateRange(ProjectTask task) {
+  if (task.actualStartDate == null && task.actualEndDate == null) {
+    return 'Not started';
+  }
+
+  final start = task.actualStartDate == null
+      ? 'Not recorded'
+      : _formatDate(task.actualStartDate!);
+  final end = task.actualEndDate == null
+      ? 'In progress'
+      : _formatDate(task.actualEndDate!);
+
+  return '$start - $end';
+}
+
+String _scheduleVariance(ProjectTask task) {
+  if (task.actualEndDate == null) {
+    final today = DateTime.now();
+    if (today.isAfter(task.plannedEndDate) && task.progress < 100) {
+      final days = today.difference(task.plannedEndDate).inDays;
+      return 'Overdue by $days day${days == 1 ? '' : 's'}';
+    }
+    return 'Not available yet';
+  }
+
+  final variance = task.actualEndDate!.difference(task.plannedEndDate).inDays;
+  if (variance == 0) {
+    return 'On schedule';
+  }
+  if (variance > 0) {
+    return '$variance day${variance == 1 ? '' : 's'} late';
+  }
+  return '${variance.abs()} day${variance.abs() == 1 ? '' : 's'} early';
 }
 
 class _ExecutionSummaryCard extends StatelessWidget {
@@ -524,6 +720,7 @@ class _ExecutionUpdateDialogState extends State<_ExecutionUpdateDialog> {
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
+        assignedWorkerIds: widget.task.assignedWorkerIds,
         isArchived: widget.task.isArchived,
       ),
     );
@@ -618,5 +815,30 @@ String _priorityLabel(ProjectTaskPriority priority) {
       return 'High';
     case ProjectTaskPriority.critical:
       return 'Critical';
+  }
+}
+
+String _workerRoleLabel(WorkerRole role) {
+  switch (role) {
+    case WorkerRole.mason:
+      return 'Mason';
+    case WorkerRole.helper:
+      return 'Helper';
+    case WorkerRole.carpenter:
+      return 'Carpenter';
+    case WorkerRole.electrician:
+      return 'Electrician';
+    case WorkerRole.plumber:
+      return 'Plumber';
+    case WorkerRole.painter:
+      return 'Painter';
+    case WorkerRole.welder:
+      return 'Welder';
+    case WorkerRole.supervisor:
+      return 'Supervisor';
+    case WorkerRole.siteEngineer:
+      return 'Site Engineer';
+    case WorkerRole.other:
+      return 'Other';
   }
 }

@@ -28,6 +28,7 @@ class ProjectTask {
     this.actualEndDate,
     this.progress = 0,
     this.notes,
+    this.assignedWorkerIds = const [],
     this.isArchived = false,
   });
 
@@ -50,5 +51,6 @@ class ProjectTask {
   final double progress;
 
   final String? notes;
+  final List<String> assignedWorkerIds;
   final bool isArchived;
 }

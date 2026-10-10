@@ -67,7 +67,7 @@ profitability.
 | Tasks and execution | Core execution slices implemented |
 | Quality management | Full quality workflow implemented through unified quality history |
 | Finance | Pending |
-| Logistics and inventory | Delivery management foundation; inventory next |
+| Logistics and inventory | Delivery, receipt, inventory, consumption, and wastage foundations |
 | Planning, BOQ, and design | Pending |
 | Communication and documents | Pending |
 | Backend, authentication, and sync | Intentionally deferred |
@@ -76,8 +76,8 @@ profitability.
 ### Validation baseline
 
 - Flutter static analysis: passing
-- Automated test suite: **42 tests passing**
-- Last validated: **7 October 2026**
+- Automated test suite: **47 tests passing**
+- Last validated: **10 October 2026**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
 - Backend API: not yet integrated
@@ -316,10 +316,10 @@ infrastructure while the current feature stages are incomplete.
 ### Stage 3 - Materials and logistics
 
 - [x] Delivery management
-- [ ] Inventory
-- [ ] Material receipt
-- [ ] Material consumption
-- [ ] Wastage
+- [x] Inventory
+- [x] Material receipt
+- [x] Material consumption
+- [x] Wastage
 - [ ] Material forecasting
 
 ### Stage 4 - Finance
@@ -529,6 +529,25 @@ infrastructure while the current feature stages are incomplete.
 - Route and project-navigation integration
 - Validated with `flutter analyze`, `flutter test`, and `git diff --check`
 
+### Stage 3: Inventory, receipts, consumption, and wastage
+
+- Material receipt entity linked to a project, material, and optional delivery
+- Material consumption entity with optional phase/task context
+- Material wastage entity with damage, excess, spoilage, quality-issue, and
+  other reasons
+- Mock repositories with project filtering and newest-first ordering
+- Riverpod providers for receipts, consumption, wastage, and calculated stock
+- Inventory calculator that derives received, consumed, wasted, and available
+  quantities per material
+- Project inventory screen with available-stock summaries
+- Stock movement menu for recording receipts, consumption, and wastage
+- Positive quantity and required-person validation for all stock movements
+- Material catalog name and unit resolution in inventory forms and summaries
+- Project route and navigation entry for material inventory
+- Focused calculator and repository tests
+- Validated with `flutter analyze`, `flutter test` (**47 tests passing**), and
+  `git diff --check`
+
 ---
 
 ## 8. Quality and engineering rules
@@ -592,12 +611,13 @@ Project foundation
   -> Task execution foundation
   -> Quality management foundation
   -> Delivery management foundation
-  -> NEXT: Inventory
+  -> Inventory, receipts, consumption, and wastage foundations
+  -> NEXT: Material forecasting
 ```
 
 The quality stage is now complete for the current roadmap scope. The next
-planned feature is **inventory**, building on inbound deliveries and material
-requirements.
+planned feature is **material forecasting**, building on project requirements,
+delivery history, and calculated stock balances.
 
 Before implementing inventory, preserve the current decisions:
 
@@ -606,8 +626,10 @@ Before implementing inventory, preserve the current decisions:
 - Use a mock repository and Riverpod providers.
 - Do not introduce backend APIs or authentication.
 - Add focused repository/domain tests.
-- Keep received quantities separate from planned requirement quantities until
-  inventory rules are explicitly implemented.
+- Keep received quantities separate from planned requirement quantities.
+- Treat receipts as the point at which inbound deliveries become usable stock.
+- Derive available stock as receipts minus consumption and wastage.
+- Keep stock movement records auditable through stable IDs and dates.
 
 Open design questions for the materials stage:
 

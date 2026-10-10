@@ -7,8 +7,7 @@ void main() {
   test('returns project deliveries newest first', () async {
     final repository = MockMaterialDeliveryRepository();
 
-    final deliveries =
-        await repository.getDeliveries(projectId: 'project-001');
+    final deliveries = await repository.getDeliveries(projectId: 'project-001');
 
     expect(deliveries, hasLength(1));
     expect(deliveries.first.status, MaterialDeliveryStatus.received);
@@ -16,8 +15,7 @@ void main() {
 
   test('updates a delivery status', () async {
     final repository = MockMaterialDeliveryRepository();
-    final deliveries =
-        await repository.getDeliveries(projectId: 'project-001');
+    final deliveries = await repository.getDeliveries(projectId: 'project-001');
     final original = deliveries.first;
 
     final updated = await repository.updateDelivery(

@@ -149,6 +149,15 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.inventory_2_outlined,
+            title: 'Material Inventory',
+            subtitle:
+                'Track receipts, available stock, consumption and wastage',
+            onTap: () {
+              context.push('/projects/${project.id}/material-inventory');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.assignment_outlined,
             title: 'Daily Site Reports',
             subtitle: 'Record daily work, issues, safety and quality',

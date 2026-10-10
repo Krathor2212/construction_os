@@ -16,6 +16,7 @@ import '../features/procurement/presentation/pages/purchase_orders_page.dart';
 import '../features/procurement/presentation/pages/purchase_order_details_page.dart';
 import '../features/materials/presentation/pages/material_requirements_page.dart';
 import '../features/materials/presentation/pages/project_material_deliveries_page.dart';
+import '../features/materials/presentation/pages/project_material_inventory_page.dart';
 import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 import '../features/tasks/presentation/pages/project_tasks_page.dart';
@@ -154,6 +155,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/projects/:projectId/material-deliveries',
       builder: (context, state) => ProjectMaterialDeliveriesPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/material-inventory',
+      builder: (context, state) => ProjectMaterialInventoryPage(
         projectId: state.pathParameters['projectId']!,
       ),
     ),

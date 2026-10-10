@@ -22,7 +22,9 @@ class MockMaterialDeliveryRepository implements MaterialDeliveryRepository {
   Future<List<MaterialDelivery>> getDeliveries({
     required String projectId,
   }) async {
-    return _deliveries.where((delivery) => delivery.projectId == projectId).toList()
+    return _deliveries
+        .where((delivery) => delivery.projectId == projectId)
+        .toList()
       ..sort((a, b) => b.deliveryDate.compareTo(a.deliveryDate));
   }
 

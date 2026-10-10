@@ -17,6 +17,8 @@ import '../features/procurement/presentation/pages/purchase_order_details_page.d
 import '../features/materials/presentation/pages/material_requirements_page.dart';
 import '../features/materials/presentation/pages/project_material_deliveries_page.dart';
 import '../features/materials/presentation/pages/project_material_inventory_page.dart';
+import '../features/materials/presentation/pages/project_material_forecast_page.dart';
+import '../features/finance/presentation/pages/project_finance_pages.dart';
 import '../features/workforce/presentation/pages/worker_attendance_page.dart';
 import '../features/workforce/presentation/pages/worker_allocation_page.dart';
 import '../features/tasks/presentation/pages/project_tasks_page.dart';
@@ -161,6 +163,30 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/projects/:projectId/material-inventory',
       builder: (context, state) => ProjectMaterialInventoryPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/material-forecast',
+      builder: (context, state) => ProjectMaterialForecastPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/supplier-bills',
+      builder: (context, state) => ProjectSupplierBillsPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/supplier-payments',
+      builder: (context, state) => ProjectSupplierPaymentsPage(
+        projectId: state.pathParameters['projectId']!,
+      ),
+    ),
+    GoRoute(
+      path: '/projects/:projectId/client-invoices',
+      builder: (context, state) => ProjectClientInvoicesPage(
         projectId: state.pathParameters['projectId']!,
       ),
     ),

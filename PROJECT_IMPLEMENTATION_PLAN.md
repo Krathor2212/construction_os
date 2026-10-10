@@ -67,7 +67,8 @@ profitability.
 | Tasks and execution | Core execution slices implemented |
 | Quality management | Full quality workflow implemented through unified quality history |
 | Finance | Pending |
-| Logistics and inventory | Delivery, receipt, inventory, consumption, and wastage foundations |
+| Logistics and inventory | Delivery, inventory, stock movement, and forecasting foundations |
+| Finance | Supplier bills, supplier payments, and client milestone invoicing foundations |
 | Planning, BOQ, and design | Pending |
 | Communication and documents | Pending |
 | Backend, authentication, and sync | Intentionally deferred |
@@ -76,7 +77,7 @@ profitability.
 ### Validation baseline
 
 - Flutter static analysis: passing
-- Automated test suite: **47 tests passing**
+- Automated test suite: **51 tests passing**
 - Last validated: **10 October 2026**
 - Data source: mock/in-memory repositories
 - Production readiness: not yet ready
@@ -320,13 +321,13 @@ infrastructure while the current feature stages are incomplete.
 - [x] Material receipt
 - [x] Material consumption
 - [x] Wastage
-- [ ] Material forecasting
+- [x] Material forecasting
 
 ### Stage 4 - Finance
 
-- [ ] Supplier bills
-- [ ] Supplier payments
-- [ ] Client invoices and milestones
+- [x] Supplier bills
+- [x] Supplier payments
+- [x] Client invoices and milestones
 - [ ] Client payments
 - [ ] Expenses
 - [ ] Ledger
@@ -545,7 +546,49 @@ infrastructure while the current feature stages are incomplete.
 - Material catalog name and unit resolution in inventory forms and summaries
 - Project route and navigation entry for material inventory
 - Focused calculator and repository tests
-- Validated with `flutter analyze`, `flutter test` (**47 tests passing**), and
+- Validated with `flutter analyze`, `flutter test` (**51 tests passing**), and
+  `git diff --check`
+
+### Stage 3: Material forecasting
+
+- Material forecast entity combining planned requirements with current stock
+- Forecast calculator grouped by material
+- Required, received, available, and projected-shortfall quantities
+- Covered versus short status for each material
+- Project forecast screen with material-name resolution
+- Riverpod provider combining requirement and inventory providers
+- Focused shortfall calculation test
+
+### Stage 4: Supplier bills
+
+- Supplier bill entity with bill number, supplier, dates, amount, paid amount,
+  status, and outstanding balance
+- Bill statuses: draft, submitted, partially paid, paid, overdue, and
+  cancelled
+- Project-scoped mock repository and Riverpod provider
+- Supplier-bill list screen and create form
+- Project navigation entry and route
+
+### Stage 4: Supplier payments
+
+- Supplier payment entity linked to a supplier bill
+- Payment date, amount, method, reference, and notes
+- Project-scoped mock repository and Riverpod provider
+- Supplier-payment list screen and record-payment form
+- Project navigation entry and route
+
+### Stage 4: Client invoices and milestones
+
+- Client invoice entity linked to a project milestone
+- Invoice number, milestone, issue/due dates, amount, paid amount, status,
+  and outstanding balance
+- Invoice statuses: draft, issued, partially paid, paid, overdue, and
+  cancelled
+- Project-scoped mock repository and Riverpod provider
+- Client invoice and milestone list screen with create form
+- Project navigation entry and route
+- Focused repository coverage for all three finance repositories
+- Validated with `flutter analyze`, `flutter test` (**51 tests passing**), and
   `git diff --check`
 
 ---
@@ -612,12 +655,14 @@ Project foundation
   -> Quality management foundation
   -> Delivery management foundation
   -> Inventory, receipts, consumption, and wastage foundations
-  -> NEXT: Material forecasting
+  -> Material forecasting foundation
+  -> Supplier bills, payments, and client milestone invoicing foundations
+  -> NEXT: Client payments
 ```
 
 The quality stage is now complete for the current roadmap scope. The next
-planned feature is **material forecasting**, building on project requirements,
-delivery history, and calculated stock balances.
+planned feature is **client payments**, building on issued client invoices and
+milestone balances.
 
 Before implementing inventory, preserve the current decisions:
 
@@ -630,6 +675,8 @@ Before implementing inventory, preserve the current decisions:
 - Treat receipts as the point at which inbound deliveries become usable stock.
 - Derive available stock as receipts minus consumption and wastage.
 - Keep stock movement records auditable through stable IDs and dates.
+- Keep supplier bills and payments as separate records linked by bill IDs.
+- Keep client invoices tied to explicit project milestones.
 
 Open design questions for the materials stage:
 
@@ -637,6 +684,8 @@ Open design questions for the materials stage:
 - Should delivery quantities be capped by the remaining requirement quantity?
 - Should received deliveries automatically create inventory stock records?
 - Should purchase orders be linked directly to delivery records?
+- Should supplier payments automatically update linked bill balances?
+- Should client payments automatically update invoice balances?
 - Should quality history be shown directly on task details?
 
 Resolve these questions when the relevant feature is implemented, not by adding

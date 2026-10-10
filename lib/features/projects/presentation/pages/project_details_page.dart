@@ -158,6 +158,38 @@ class _ProjectDetailsContent extends StatelessWidget {
             },
           ),
           _ManagementOption(
+            icon: Icons.insights_outlined,
+            title: 'Material Forecast',
+            subtitle: 'Compare material requirements with available stock',
+            onTap: () {
+              context.push('/projects/${project.id}/material-forecast');
+            },
+          ),
+          _ManagementOption(
+            icon: Icons.receipt_long_outlined,
+            title: 'Supplier Bills',
+            subtitle: 'Track supplier bills and outstanding amounts',
+            onTap: () {
+              context.push('/projects/${project.id}/supplier-bills');
+            },
+          ),
+          _ManagementOption(
+            icon: Icons.payments_outlined,
+            title: 'Supplier Payments',
+            subtitle: 'Record payments made to suppliers',
+            onTap: () {
+              context.push('/projects/${project.id}/supplier-payments');
+            },
+          ),
+          _ManagementOption(
+            icon: Icons.request_quote_outlined,
+            title: 'Client Invoices & Milestones',
+            subtitle: 'Issue invoices against project milestones',
+            onTap: () {
+              context.push('/projects/${project.id}/client-invoices');
+            },
+          ),
+          _ManagementOption(
             icon: Icons.assignment_outlined,
             title: 'Daily Site Reports',
             subtitle: 'Record daily work, issues, safety and quality',

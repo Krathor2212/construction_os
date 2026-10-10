@@ -4,7 +4,7 @@
 
 > **Document status:** Active implementation source of truth
 > **Release target:** `v2.0.0-beta`
-> **Last updated:** 7 October 2026
+> **Last updated:** 10 October 2026
 > **Application state:** Development prototype
 
 This document records the product direction, implementation order, architecture
